@@ -6,6 +6,7 @@ import { Calendar } from './Calendar';
 import { TimeSlots, type TimeSlot } from './TimeSlots';
 import { BookingForm } from './BookingForm';
 import { BookingConfirmation } from './BookingConfirmation';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const initialTimeSlots: TimeSlot[] = [
   { time: '09:00', available: true },
@@ -52,6 +53,10 @@ export default function AppointmentBooking() {
   const [isFetchingSlots, setIsFetchingSlots] = useState(false);
   const [isSearchingCase, setIsSearchingCase] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Auto sign in for demo purposes
   useEffect(() => {
@@ -66,21 +71,61 @@ export default function AppointmentBooking() {
           password: 'demo123',
         });
       }
+      setIsInitialized(true);
     };
     signIn();
   }, []);
 
   // Initialize with today's date and fetch initial slots
   useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    setCurrentDate(today);
-    setSelectedDate(today);
-  }, []);
+    if (isInitialized) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      setCurrentDate(today);
+      setSelectedDate(today);
+      fetchBookingCounts(today);
+    }
+  }, [isInitialized]);
+
+  // Show notification
+  const showTemporaryNotification = (message: string, type: 'success' | 'error') => {
+    setNotificationMessage(message);
+    setNotificationType(type);
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 3000);
+  };
+
+  // Subscribe to real-time updates for appointments
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const subscription = supabase
+      .channel('appointments-changes')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'appointments' 
+      }, payload => {
+        if (selectedDate) {
+          const bookingDate = payload.new.appointment_date;
+          const selectedDateStr = selectedDate.toISOString().split('T')[0];
+          
+          if (bookingDate === selectedDateStr) {
+            fetchBookingCounts(selectedDate);
+            showTemporaryNotification('A new booking has been made. Time slots updated.', 'info');
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [selectedDate, isInitialized]);
 
   // Fetch booking counts for selected date
   const fetchBookingCounts = async (date: Date) => {
-    if (!date) return;
+    if (!date || !isInitialized) return;
     
     setIsFetchingSlots(true);
     try {
@@ -92,6 +137,7 @@ export default function AppointmentBooking() {
 
       if (error) {
         console.error('Error fetching appointments:', error);
+        showTemporaryNotification('Error loading time slots. Please try again.', 'error');
         return;
       }
 
@@ -109,6 +155,9 @@ export default function AppointmentBooking() {
       }));
 
       setAvailableSlots(updatedSlots);
+    } catch (error) {
+      console.error('Error updating slots:', error);
+      showTemporaryNotification('Error updating time slots. Please try again.', 'error');
     } finally {
       setIsFetchingSlots(false);
     }
@@ -116,10 +165,10 @@ export default function AppointmentBooking() {
 
   // Fetch slots when selected date changes or when returning for another booking
   useEffect(() => {
-    if (selectedDate) {
+    if (selectedDate && isInitialized) {
       fetchBookingCounts(selectedDate);
     }
-  }, [selectedDate, bookingStatus.success]);
+  }, [selectedDate, bookingStatus.success, isInitialized]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -155,8 +204,10 @@ export default function AppointmentBooking() {
         name: data.name,
         phone: data.phone,
       }));
+      showTemporaryNotification('Patient information found!', 'success');
     } catch (error: any) {
       setSearchError(error.message);
+      showTemporaryNotification(error.message, 'error');
     } finally {
       setIsSearchingCase(false);
     }
@@ -170,6 +221,7 @@ export default function AppointmentBooking() {
         success: false,
         message: 'Please select both date and time for your appointment',
       });
+      showTemporaryNotification('Please select both date and time for your appointment', 'error');
       return;
     }
 
@@ -216,11 +268,13 @@ export default function AppointmentBooking() {
       setFormData({ name: '', phone: '', caseId: '' });
       setSelectedDate(null);
       setSelectedTime('');
+      showTemporaryNotification('Appointment booked successfully!', 'success');
     } catch (error: any) {
       setBookingStatus({
         success: false,
         message: error.message || 'Failed to book appointment. Please try again.',
       });
+      showTemporaryNotification(error.message || 'Failed to book appointment', 'error');
       console.error('Booking error:', error);
     } finally {
       setIsLoading(false);
@@ -251,73 +305,105 @@ export default function AppointmentBooking() {
     if (!isDateDisabled(newDate)) {
       setSelectedDate(newDate);
       setSelectedTime(''); // Reset selected time when date changes
+      fetchBookingCounts(newDate); // Fetch slots immediately when date is selected
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-3 sm:p-6 bg-white rounded-2xl shadow-xl">
-      <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Book an Appointment</h2>
-      
-      <AnimatePresence mode="wait">
-        {bookingStatus.success && bookingStatus.appointment ? (
-          <motion.div
-            key="confirmation"
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={pageTransition}
-          >
-            <BookingConfirmation
-              appointment={bookingStatus.appointment}
-              onBookAnother={() => {
-                setBookingStatus({});
-                // Reset the selected date to today when booking another appointment
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                setSelectedDate(today);
-              }}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="booking-form"
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={pageTransition}
-            className="space-y-6"
-          >
-            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              <Calendar
-                currentDate={currentDate}
-                selectedDate={selectedDate}
-                onDateSelect={handleDateSelect}
-                onPrevMonth={handlePrevMonth}
-                onNextMonth={handleNextMonth}
-                isDateDisabled={isDateDisabled}
-              />
-              
-              <TimeSlots
-                slots={availableSlots}
-                selectedTime={selectedTime}
-                onTimeSelect={setSelectedTime}
-                isLoading={isFetchingSlots}
-              />
-            </div>
+    <div className="min-h-screen bg-gray-100 py-12">
+      <div className="max-w-4xl mx-auto">
+        {/* Notification */}
+        <AnimatePresence>
+          {showNotification && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+                notificationType === 'success' ? 'bg-green-100' : 'bg-red-100'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {notificationType === 'success' ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                )}
+                <p className={`text-sm ${
+                  notificationType === 'success' ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {notificationMessage}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            <BookingForm
-              formData={formData}
-              onInputChange={handleInputChange}
-              onCaseSearch={handleCaseSearch}
-              isSearchingCase={isSearchingCase}
-              searchError={searchError}
-              isLoading={isLoading}
-              onSubmit={handleSubmit}
-              errorMessage={bookingStatus.message}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-xl">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Book an Appointment</h2>
+          
+          <AnimatePresence mode="wait">
+            {bookingStatus.success && bookingStatus.appointment ? (
+              <motion.div
+                key="confirmation"
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageTransition}
+              >
+                <BookingConfirmation
+                  appointment={bookingStatus.appointment}
+                  onBookAnother={() => {
+                    setBookingStatus({});
+                    // Reset the selected date to today when booking another appointment
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    setSelectedDate(today);
+                  }}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="booking-form"
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageTransition}
+                className="space-y-6"
+              >
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+                  <Calendar
+                    currentDate={currentDate}
+                    selectedDate={selectedDate}
+                    onDateSelect={handleDateSelect}
+                    onPrevMonth={handlePrevMonth}
+                    onNextMonth={handleNextMonth}
+                    isDateDisabled={isDateDisabled}
+                  />
+                  
+                  <TimeSlots
+                    slots={availableSlots}
+                    selectedTime={selectedTime}
+                    onTimeSelect={setSelectedTime}
+                    isLoading={isFetchingSlots}
+                  />
+                </div>
+
+                <BookingForm
+                  formData={formData}
+                  onInputChange={handleInputChange}
+                  onCaseSearch={handleCaseSearch}
+                  isSearchingCase={isSearchingCase}
+                  searchError={searchError}
+                  isLoading={isLoading}
+                  onSubmit={handleSubmit}
+                  errorMessage={bookingStatus.message}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 }
