@@ -50,6 +50,7 @@ export default function AppointmentBooking() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingSlots, setIsFetchingSlots] = useState(false);
   const [isSearchingCase, setIsSearchingCase] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   // Auto sign in for demo purposes
   useEffect(() => {
@@ -111,6 +112,9 @@ export default function AppointmentBooking() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'caseId') {
+      setSearchError(null);
+    }
   };
 
   const handleCaseSearch = async (e: React.FormEvent) => {
@@ -118,29 +122,29 @@ export default function AppointmentBooking() {
     if (!formData.caseId) return;
 
     setIsSearchingCase(true);
+    setSearchError(null);
     try {
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
         .eq('case_id', formData.caseId.toUpperCase())
-        .single();
+        .maybeSingle();
 
       if (error) {
+        throw new Error('Error searching for appointment');
+      }
+
+      if (!data) {
         throw new Error('No appointment found with this Case ID');
       }
 
-      if (data) {
-        setFormData(prev => ({
-          ...prev,
-          name: data.name,
-          phone: data.phone,
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        name: data.name,
+        phone: data.phone,
+      }));
     } catch (error: any) {
-      setBookingStatus({
-        success: false,
-        message: error.message,
-      });
+      setSearchError(error.message);
     } finally {
       setIsSearchingCase(false);
     }
@@ -305,45 +309,6 @@ export default function AppointmentBooking() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Case ID Search */}
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-700 mb-3">Returning Patient?</h3>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  name="caseId"
-                  value={formData.caseId}
-                  onChange={handleInputChange}
-                  placeholder="Enter your Case ID"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleCaseSearch}
-                disabled={isSearchingCase || !formData.caseId}
-                className={`
-                  px-4 py-2 rounded-lg font-medium
-                  flex items-center gap-2
-                  ${isSearchingCase || !formData.caseId
-                    ? 'bg-gray-300 cursor-not-allowed'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  }
-                `}
-              >
-                {isSearchingCase ? (
-                  <PulseLoader size={8} color="#ffffff" />
-                ) : (
-                  <>
-                    <Search className="h-5 w-5" />
-                    <span>Search</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
           <div className="grid md:grid-cols-2 gap-6">
             {/* Date Selection */}
             <div className="space-y-2">
@@ -447,8 +412,52 @@ export default function AppointmentBooking() {
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Personal Information */}
+          {/* Returning Patient */}
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h3 className="text-lg font-medium text-gray-700 mb-3">Returning Patient?</h3>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  name="caseId"
+                  value={formData.caseId}
+                  onChange={handleInputChange}
+                  placeholder="Enter your Case ID"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleCaseSearch}
+                disabled={isSearchingCase || !formData.caseId}
+                className={`
+                  px-4 py-2 rounded-lg font-medium
+                  flex items-center gap-2
+                  ${isSearchingCase || !formData.caseId
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  }
+                `}
+              >
+                {isSearchingCase ? (
+                  <PulseLoader size={8} color="#ffffff" />
+                ) : (
+                  <>
+                    <Search className="h-5 w-5" />
+                    <span>Search</span>
+                  </>
+                )}
+              </button>
+            </div>
+            {searchError && (
+              <p className="mt-2 text-sm text-red-600">{searchError}</p>
+            )}
+          </div>
+
+          {/* Personal Information */}
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Full Name</label>
               <div className="relative">
