@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { Calendar } from './Calendar';
 import { TimeSlots, type TimeSlot } from './TimeSlots';
@@ -23,6 +24,13 @@ type Appointment = {
   phone: string;
   appointment_date: string;
   appointment_time: string;
+};
+
+const pageTransition = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+  transition: { duration: 0.3 }
 };
 
 export default function AppointmentBooking() {
@@ -72,6 +80,8 @@ export default function AppointmentBooking() {
 
   // Fetch booking counts for selected date
   const fetchBookingCounts = async (date: Date) => {
+    if (!date) return;
+    
     setIsFetchingSlots(true);
     try {
       const dateStr = date.toISOString().split('T')[0];
@@ -104,12 +114,12 @@ export default function AppointmentBooking() {
     }
   };
 
-  // Fetch slots when selected date changes
+  // Fetch slots when selected date changes or when returning for another booking
   useEffect(() => {
     if (selectedDate) {
       fetchBookingCounts(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, bookingStatus.success]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -248,43 +258,66 @@ export default function AppointmentBooking() {
     <div className="max-w-4xl mx-auto p-3 sm:p-6 bg-white rounded-2xl shadow-xl">
       <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Book an Appointment</h2>
       
-      {bookingStatus.success && bookingStatus.appointment ? (
-        <BookingConfirmation
-          appointment={bookingStatus.appointment}
-          onBookAnother={() => setBookingStatus({})}
-        />
-      ) : (
-        <div className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-            <Calendar
-              currentDate={currentDate}
-              selectedDate={selectedDate}
-              onDateSelect={handleDateSelect}
-              onPrevMonth={handlePrevMonth}
-              onNextMonth={handleNextMonth}
-              isDateDisabled={isDateDisabled}
+      <AnimatePresence mode="wait">
+        {bookingStatus.success && bookingStatus.appointment ? (
+          <motion.div
+            key="confirmation"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageTransition}
+          >
+            <BookingConfirmation
+              appointment={bookingStatus.appointment}
+              onBookAnother={() => {
+                setBookingStatus({});
+                // Reset the selected date to today when booking another appointment
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                setSelectedDate(today);
+              }}
             />
-            
-            <TimeSlots
-              slots={availableSlots}
-              selectedTime={selectedTime}
-              onTimeSelect={setSelectedTime}
-              isLoading={isFetchingSlots}
-            />
-          </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="booking-form"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={pageTransition}
+            className="space-y-6"
+          >
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+              <Calendar
+                currentDate={currentDate}
+                selectedDate={selectedDate}
+                onDateSelect={handleDateSelect}
+                onPrevMonth={handlePrevMonth}
+                onNextMonth={handleNextMonth}
+                isDateDisabled={isDateDisabled}
+              />
+              
+              <TimeSlots
+                slots={availableSlots}
+                selectedTime={selectedTime}
+                onTimeSelect={setSelectedTime}
+                isLoading={isFetchingSlots}
+              />
+            </div>
 
-          <BookingForm
-            formData={formData}
-            onInputChange={handleInputChange}
-            onCaseSearch={handleCaseSearch}
-            isSearchingCase={isSearchingCase}
-            searchError={searchError}
-            isLoading={isLoading}
-            onSubmit={handleSubmit}
-            errorMessage={bookingStatus.message}
-          />
-        </div>
-      )}
+            <BookingForm
+              formData={formData}
+              onInputChange={handleInputChange}
+              onCaseSearch={handleCaseSearch}
+              isSearchingCase={isSearchingCase}
+              searchError={searchError}
+              isLoading={isLoading}
+              onSubmit={handleSubmit}
+              errorMessage={bookingStatus.message}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
