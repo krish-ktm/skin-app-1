@@ -11,6 +11,7 @@ import { AdminAuthProvider, useAdminAuth } from './contexts/AdminAuthContext';
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAdminAuth();
   
+  
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
