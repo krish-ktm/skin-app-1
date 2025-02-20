@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, User, Phone } from 'lucide-react';
+import { ArrowLeft, User, Phone, Users } from 'lucide-react';
 import { FormData } from '../../../../types';
 import { ErrorMessage } from './ErrorMessage';
 import { SubmitButton } from './SubmitButton';
 
 interface NewPatientFormProps {
   formData: FormData;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onBack: () => void;
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
@@ -83,6 +83,29 @@ export function NewPatientForm({
                 disabled={isLoading}
               />
               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">Gender</label>
+            <div className="relative">
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={onInputChange}
+                className="w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md appearance-none"
+                required
+                disabled={isLoading}
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+              <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
             </div>
           </div>
         </motion.div>

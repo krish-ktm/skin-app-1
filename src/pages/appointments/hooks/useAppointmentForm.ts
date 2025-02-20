@@ -7,11 +7,12 @@ export function useAppointmentForm() {
     name: '',
     phone: '',
     caseId: '',
+    gender: 'male',
   });
   const [isSearchingCase, setIsSearchingCase] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (name === 'caseId') {
@@ -36,6 +37,7 @@ export function useAppointmentForm() {
         ...prev,
         name: data.name,
         phone: data.phone,
+        gender: data.gender,
       }));
       return true;
     } catch (error: any) {

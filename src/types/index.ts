@@ -27,4 +27,5 @@ export interface FormData {
   name: string;
   phone: string;
   caseId: string;
+  gender: string;
 }

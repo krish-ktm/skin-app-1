@@ -154,39 +154,48 @@ export default function AppointmentBooking() {
             exit="exit"
             variants={pageTransition}
           >
-            <div className="text-center p-4 sm:p-6 bg-green-50 rounded-lg">
-              <h3 className="text-xl font-semibold text-green-800 mb-4">Booking Confirmed!</h3>
-              <div className="space-y-3 text-left max-w-md mx-auto bg-white p-4 rounded-lg border border-green-200">
-                <p className="font-mono bg-green-100 p-2 rounded text-sm sm:text-base">
-                  Case ID: {bookingStatus.appointment.case_id}
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-sm sm:text-base">
-                  <p className="text-gray-600">Name:</p>
-                  <p className="font-medium">{bookingStatus.appointment.name}</p>
-                  <p className="text-gray-600">Phone:</p>
-                  <p className="font-medium">{bookingStatus.appointment.phone}</p>
-                  <p className="text-gray-600">Date:</p>
-                  <p className="font-medium">
-                    {new Date(bookingStatus.appointment.appointment_date).toLocaleDateString()}
-                  </p>
-                  <p className="text-gray-600">Time:</p>
-                  <p className="font-medium">{bookingStatus.appointment.appointment_time}</p>
+            <div className="text-center p-6 sm:p-8 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl">
+              <div className="flex justify-center mb-6">
+                <div className="bg-green-100 p-4 rounded-full">
+                  <CheckCircle2 className="h-12 w-12 text-green-500" />
                 </div>
               </div>
-              <div className="mt-6">
-                <button
-                  onClick={() => {
-                    setBookingStatus({});
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    setSelectedDate(today);
-                    setIsReturningPatient(null);
-                    setFormData({ name: '', phone: '', caseId: '' });
-                  }}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Book Another Appointment
-                </button>
+              <h3 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">Booking Confirmed!</h3>
+              <p className="text-green-600 mb-8">Your appointment has been successfully scheduled</p>
+              
+              <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md border border-green-200">
+                <div className="space-y-4">
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <p className="font-mono text-sm sm:text-base text-green-800">
+                      Case ID: {bookingStatus.appointment.case_id}
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-left">
+                    <div>
+                      <p className="text-sm text-gray-500">Name</p>
+                      <p className="font-medium text-gray-900">{bookingStatus.appointment.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Phone</p>
+                      <p className="font-medium text-gray-900">{bookingStatus.appointment.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Gender</p>
+                      <p className="font-medium text-gray-900 capitalize">{bookingStatus.appointment.gender}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Date</p>
+                      <p className="font-medium text-gray-900">
+                        {new Date(bookingStatus.appointment.appointment_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-sm text-gray-500">Time</p>
+                      <p className="font-medium text-gray-900">{bookingStatus.appointment.appointment_time}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>

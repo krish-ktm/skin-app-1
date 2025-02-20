@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Search, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Search, CheckCircle2, Users } from 'lucide-react';
 import { PulseLoader } from 'react-spinners';
 import { FormData } from '../../../../types';
 import { ErrorMessage } from './ErrorMessage';
@@ -8,7 +8,7 @@ import { SubmitButton } from './SubmitButton';
 
 interface ReturningPatientFormProps {
   formData: FormData;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onCaseSearch: (e: React.FormEvent) => void;
   isSearchingCase: boolean;
   searchError: string | null;
@@ -120,6 +120,28 @@ export function ReturningPatientForm({
             <div className="space-y-2">
               <p className="text-sm font-medium text-green-700">Phone</p>
               <p className="text-base sm:text-lg font-medium text-gray-900">{formData.phone}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-green-700">Gender</p>
+              <div className="relative">
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={onInputChange}
+                  className="w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white transition-shadow hover:shadow-md appearance-none"
+                  required
+                  disabled={isLoading}
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+                <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>

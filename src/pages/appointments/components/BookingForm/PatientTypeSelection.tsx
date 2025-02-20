@@ -36,7 +36,7 @@ export function PatientTypeSelection({ onSelect }: PatientTypeSelectionProps) {
         </span>
       </motion.h3>
 
-      <div className="grid grid-cols-1 gap-4 w-full max-w-3xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
         <motion.button
           variants={itemVariants}
           type="button"
