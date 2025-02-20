@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { nanoid } from 'nanoid';
-import { appointmentService } from '../../../services/supabase';
-import { supabase } from '../../../services/supabase';
+import { supabase } from '../../../lib/supabase';
 import type { Appointment, BookingStatus, FormData } from '../../../types';
 import { toUTCDateString } from '../../../utils/date';
 
@@ -28,7 +27,8 @@ export function useAppointmentBooking(
     }
 
     setIsLoading(true);
-    const caseId = nanoid(10).toUpperCase();
+    // Only generate a new case ID if it's a new patient
+    const caseId = formData.caseId || nanoid(10).toUpperCase();
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -37,7 +37,13 @@ export function useAppointmentBooking(
       const dateStr = toUTCDateString(selectedDate);
 
       // Check current booking count
-      const existingBookings = await appointmentService.getAppointmentsByDate(dateStr);
+      const { data: existingBookings, error: countError } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('appointment_date', dateStr)
+        .eq('appointment_time', selectedTime);
+
+      if (countError) throw countError;
 
       if (existingBookings && existingBookings.length >= 4) {
         throw new Error('This time slot is now full. Please select another time.');
@@ -50,14 +56,26 @@ export function useAppointmentBooking(
         appointment_date: dateStr,
         appointment_time: selectedTime,
         gender: 'male', // Default value as per schema
+        user_id: user.id
       };
 
-      await appointmentService.createAppointment({ ...appointment, user_id: user.id });
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert(appointment)
+        .select()
+        .single();
 
-      const successAppointment = {
-        ...appointment,
-        id: '', // Will be filled by Supabase
-        created_at: new Date().toISOString(),
+      if (error) throw error;
+
+      const successAppointment: Appointment = {
+        id: data.id,
+        case_id: data.case_id,
+        name: data.name,
+        phone: data.phone,
+        appointment_date: data.appointment_date,
+        appointment_time: data.appointment_time,
+        created_at: data.created_at,
+        gender: data.gender
       };
 
       setBookingStatus({

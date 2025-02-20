@@ -8,6 +8,7 @@ export interface Appointment {
   appointment_time: string;
   created_at: string;
   gender: string;
+  user_id?: string;
 }
 
 export interface TimeSlot {
