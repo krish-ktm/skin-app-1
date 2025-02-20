@@ -16,6 +16,8 @@ interface BookingFormProps {
   isLoading: boolean;
   onSubmit: (e: React.FormEvent) => void;
   errorMessage?: string;
+  isReturningPatient: boolean | null;
+  setIsReturningPatient: (value: boolean | null) => void;
 }
 
 const containerVariants = {
@@ -49,8 +51,9 @@ export function BookingForm({
   isLoading,
   onSubmit,
   errorMessage,
+  isReturningPatient,
+  setIsReturningPatient,
 }: BookingFormProps) {
-  const [isReturningPatient, setIsReturningPatient] = useState<boolean | null>(null);
   const [selectedCard, setSelectedCard] = useState<'returning' | 'new' | null>(null);
 
   const handleCardSelection = (type: 'returning' | 'new') => {
@@ -350,7 +353,7 @@ export function BookingForm({
                 <span>Booking Appointment...</span>
               </>
             ) : (
-              'Book Appointment'
+              'Book Appointment '
             )}
           </button>
         </motion.div>

@@ -53,6 +53,7 @@ export default function AppointmentBooking() {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isReturningPatient, setIsReturningPatient] = useState<boolean | null>(null);
 
   const showTemporaryNotification = useCallback((message: string, type: 'success' | 'error') => {
     setNotificationMessage(message);
@@ -220,7 +221,8 @@ export default function AppointmentBooking() {
     }
 
     setIsLoading(true);
-    const caseId = nanoid(10).toUpperCase();
+    // Only generate a new case ID if it's a new patient
+    const caseId = isReturningPatient ? formData.caseId : nanoid(10).toUpperCase();
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -349,6 +351,8 @@ export default function AppointmentBooking() {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 setSelectedDate(today);
+                setIsReturningPatient(null);
+                setFormData({ name: '', phone: '', caseId: '' });
               }}
             />
           </motion.div>
@@ -388,6 +392,8 @@ export default function AppointmentBooking() {
               isLoading={isLoading}
               onSubmit={handleSubmit}
               errorMessage={bookingStatus.message}
+              isReturningPatient={isReturningPatient}
+              setIsReturningPatient={setIsReturningPatient}
             />
           </motion.div>
         )}
