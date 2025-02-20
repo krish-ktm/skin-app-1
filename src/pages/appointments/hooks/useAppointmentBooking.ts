@@ -1,32 +1,16 @@
 import { useState } from 'react';
-import { supabase } from '../../../lib/supabase';
 import { nanoid } from 'nanoid';
-
-interface FormData {
-  name: string;
-  phone: string;
-  caseId: string;
-}
-
-interface Appointment {
-  case_id: string;
-  name: string;
-  phone: string;
-  appointment_date: string;
-  appointment_time: string;
-}
-
-interface BookingStatus {
-  success?: boolean;
-  message?: string;
-  appointment?: Appointment;
-}
+import { appointmentService } from '../../../services/supabase';
+import { supabase } from '../../../services/supabase';
+import type { Appointment, BookingStatus, FormData } from '../../../types';
+import { toUTCDateString } from '../../../utils/date';
 
 export function useAppointmentBooking(
   formData: FormData,
   selectedDate: Date | null,
   selectedTime: string,
-  showNotification: (message: string, type: 'success' | 'error') => void
+  onSuccess?: (appointment: Appointment) => void,
+  onError?: (message: string) => void
 ) {
   const [bookingStatus, setBookingStatus] = useState<BookingStatus>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +23,7 @@ export function useAppointmentBooking(
         success: false,
         message: 'Please select both date and time for your appointment',
       });
-      showNotification('Please select both date and time for your appointment', 'error');
+      onError?.('Please select both date and time for your appointment');
       return;
     }
 
@@ -50,45 +34,46 @@ export function useAppointmentBooking(
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const dateStr = toUTCDateString(selectedDate);
+
       // Check current booking count
-      const dateStr = selectedDate.toISOString().split('T')[0];
-      const { data: existingBookings } = await supabase
-        .from('appointments')
-        .select('id')
-        .eq('appointment_date', dateStr)
-        .eq('appointment_time', selectedTime);
+      const existingBookings = await appointmentService.getAppointmentsByDate(dateStr);
 
       if (existingBookings && existingBookings.length >= 4) {
         throw new Error('This time slot is now full. Please select another time.');
       }
 
-      const appointment: Appointment = {
+      const appointment: Omit<Appointment, 'id' | 'created_at'> = {
         case_id: caseId,
         name: formData.name,
         phone: formData.phone,
         appointment_date: dateStr,
         appointment_time: selectedTime,
+        gender: 'male', // Default value as per schema
       };
 
-      const { error } = await supabase
-        .from('appointments')
-        .insert({ ...appointment, user_id: user.id });
+      await appointmentService.createAppointment({ ...appointment, user_id: user.id });
 
-      if (error) throw error;
+      const successAppointment = {
+        ...appointment,
+        id: '', // Will be filled by Supabase
+        created_at: new Date().toISOString(),
+      };
 
       setBookingStatus({
         success: true,
         message: 'Appointment booked successfully!',
-        appointment,
+        appointment: successAppointment,
       });
 
-      showNotification('Appointment booked successfully!', 'success');
+      onSuccess?.(successAppointment);
     } catch (error: any) {
+      const message = error.message || 'Failed to book appointment. Please try again.';
       setBookingStatus({
         success: false,
-        message: error.message || 'Failed to book appointment. Please try again.',
+        message,
       });
-      showNotification(error.message || 'Failed to book appointment', 'error');
+      onError?.(message);
       console.error('Booking error:', error);
     } finally {
       setIsLoading(false);

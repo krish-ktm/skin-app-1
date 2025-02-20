@@ -1,26 +1,20 @@
-import { useState } from 'react';
-import { supabase } from '../../../lib/supabase';
-import type { TimeSlot } from '../components/TimeSlots';
+import { useState, useCallback } from 'react';
+import { appointmentService } from '../../../services/supabase';
+import { INITIAL_TIME_SLOTS } from '../../../constants';
+import type { TimeSlot } from '../../../types';
+import { toUTCDateString } from '../../../utils/date';
 
-export function useAppointmentSlots(initialSlots: TimeSlot[]) {
-  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>(initialSlots);
+export function useAppointmentSlots() {
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>(INITIAL_TIME_SLOTS);
   const [isFetchingSlots, setIsFetchingSlots] = useState(false);
 
-  const fetchBookingCounts = async (date: Date) => {
+  const fetchBookingCounts = useCallback(async (date: Date) => {
     if (!date) return;
     
     setIsFetchingSlots(true);
     try {
-      const dateStr = date.toISOString().split('T')[0];
-      const { data: appointments, error } = await supabase
-        .from('appointments')
-        .select('appointment_time')
-        .eq('appointment_date', dateStr);
-
-      if (error) {
-        console.error('Error fetching appointments:', error);
-        throw new Error('Error loading time slots. Please try again.');
-      }
+      const dateStr = toUTCDateString(date);
+      const appointments = await appointmentService.getAppointmentsByDate(dateStr);
 
       // Count bookings for each time slot
       const counts: { [key: string]: number } = {};
@@ -29,7 +23,7 @@ export function useAppointmentSlots(initialSlots: TimeSlot[]) {
       });
 
       // Update available slots
-      const updatedSlots = initialSlots.map(slot => ({
+      const updatedSlots = INITIAL_TIME_SLOTS.map(slot => ({
         ...slot,
         bookingCount: counts[slot.time] || 0,
         available: slot.available && (counts[slot.time] || 0) < 4
@@ -42,7 +36,7 @@ export function useAppointmentSlots(initialSlots: TimeSlot[]) {
     } finally {
       setIsFetchingSlots(false);
     }
-  };
+  }, []);
 
   return {
     availableSlots,
