@@ -62,7 +62,7 @@ export function BookingForm({
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-6 w-full">
       <AnimatePresence mode="wait">
         {/* Patient Type Selection */}
         {isReturningPatient === null && (
@@ -71,7 +71,7 @@ export function BookingForm({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="flex flex-col items-center space-y-6"
+            className="flex flex-col items-center space-y-6 w-full"
           >
             <motion.h3 
               variants={itemVariants}
@@ -83,28 +83,28 @@ export function BookingForm({
               </span>
             </motion.h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-3xl">
+            <div className="grid grid-cols-1 gap-4 w-full max-w-3xl">
               <motion.button
                 variants={itemVariants}
                 type="button"
                 onClick={() => handleCardSelection('returning')}
                 className={`
-                  group p-4 sm:p-8 bg-white rounded-xl sm:rounded-2xl transition-all duration-300
+                  group p-6 sm:p-8 bg-white rounded-xl sm:rounded-2xl transition-all duration-300
                   ${selectedCard === 'returning' 
                     ? 'scale-95 border-4 border-blue-500 shadow-lg' 
                     : 'border-2 border-blue-100 hover:border-blue-500 hover:shadow-xl'
                   }
-                  flex flex-col items-center space-y-3 sm:space-y-6
+                  flex flex-col items-center space-y-4
                 `}
               >
                 <div className="transform group-hover:scale-110 transition-transform duration-300">
-                  <div className="p-3 sm:p-5 bg-blue-50 rounded-full group-hover:bg-blue-100">
+                  <div className="p-4 sm:p-5 bg-blue-50 rounded-full group-hover:bg-blue-100">
                     <UserCheck className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" />
                   </div>
                 </div>
-                <div className="text-center space-y-1 sm:space-y-2">
-                  <h4 className="text-lg sm:text-xl font-semibold text-gray-800">Returning Patient</h4>
-                  <p className="text-sm sm:text-base text-gray-600">Quick access with your Case ID</p>
+                <div className="text-center space-y-2">
+                  <h4 className="text-xl sm:text-2xl font-semibold text-gray-800">Returning Patient</h4>
+                  <p className="text-base sm:text-lg text-gray-600">Quick access with your Case ID</p>
                 </div>
               </motion.button>
 
@@ -113,22 +113,22 @@ export function BookingForm({
                 type="button"
                 onClick={() => handleCardSelection('new')}
                 className={`
-                  group p-4 sm:p-8 bg-white rounded-xl sm:rounded-2xl transition-all duration-300
+                  group p-6 sm:p-8 bg-white rounded-xl sm:rounded-2xl transition-all duration-300
                   ${selectedCard === 'new' 
                     ? 'scale-95 border-4 border-green-500 shadow-lg' 
                     : 'border-2 border-green-100 hover:border-green-500 hover:shadow-xl'
                   }
-                  flex flex-col items-center space-y-3 sm:space-y-6
+                  flex flex-col items-center space-y-4
                 `}
               >
                 <div className="transform group-hover:scale-110 transition-transform duration-300">
-                  <div className="p-3 sm:p-5 bg-green-50 rounded-full group-hover:bg-green-100">
+                  <div className="p-4 sm:p-5 bg-green-50 rounded-full group-hover:bg-green-100">
                     <UserPlus className="w-8 h-8 sm:w-12 sm:h-12 text-green-500" />
                   </div>
                 </div>
-                <div className="text-center space-y-1 sm:space-y-2">
-                  <h4 className="text-lg sm:text-xl font-semibold text-gray-800">New Patient</h4>
-                  <p className="text-sm sm:text-base text-gray-600">Start your journey with us</p>
+                <div className="text-center space-y-2">
+                  <h4 className="text-xl sm:text-2xl font-semibold text-gray-800">New Patient</h4>
+                  <p className="text-base sm:text-lg text-gray-600">Start your journey with us</p>
                 </div>
               </motion.button>
             </div>
@@ -142,14 +142,14 @@ export function BookingForm({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="space-y-6"
+            className="space-y-6 w-full"
           >
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl shadow-md border border-blue-200">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 sm:p-8 rounded-2xl shadow-md border border-blue-200">
               <div className="flex items-center justify-between mb-8">
                 <motion.h3 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="text-2xl font-semibold text-blue-900"
+                  className="text-xl sm:text-2xl font-semibold text-blue-900"
                 >
                   Welcome Back!
                 </motion.h3>
@@ -169,7 +169,7 @@ export function BookingForm({
                 variants={itemVariants}
                 className="space-y-6"
               >
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col gap-4">
                   <div className="flex-1">
                     <input
                       type="text"
@@ -177,7 +177,7 @@ export function BookingForm({
                       value={formData.caseId}
                       onChange={onInputChange}
                       placeholder="Enter your Case ID"
-                      className="w-full px-6 py-4 text-lg border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md"
+                      className="w-full px-6 py-4 text-base sm:text-lg border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md"
                     />
                   </div>
                   <button
@@ -185,8 +185,8 @@ export function BookingForm({
                     onClick={onCaseSearch}
                     disabled={isSearchingCase || !formData.caseId}
                     className={`
-                      px-8 py-4 rounded-xl font-medium text-lg
-                      flex items-center justify-center gap-3 min-w-[160px]
+                      w-full px-8 py-4 rounded-xl font-medium text-base sm:text-lg
+                      flex items-center justify-center gap-3
                       transition-all duration-300
                       ${isSearchingCase || !formData.caseId
                         ? 'bg-gray-300 cursor-not-allowed'
@@ -198,7 +198,7 @@ export function BookingForm({
                       <PulseLoader size={8} color="#ffffff" />
                     ) : (
                       <>
-                        <Search className="w-6 h-6" />
+                        <Search className="w-5 h-5 sm:w-6 sm:h-6" />
                         <span>Search</span>
                       </>
                     )}
@@ -220,22 +220,22 @@ export function BookingForm({
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-green-50 to-green-100 p-8 rounded-2xl shadow-md border border-green-200"
+                className="bg-gradient-to-br from-green-50 to-green-100 p-6 sm:p-8 rounded-2xl shadow-md border border-green-200"
               >
                 <div className="flex items-center gap-4 mb-6">
                   <div className="bg-green-100 p-3 rounded-full">
                     <CheckCircle2 className="w-8 h-8 text-green-500" />
                   </div>
-                  <h4 className="text-xl font-semibold text-green-800">Patient Information Found</h4>
+                  <h4 className="text-lg sm:text-xl font-semibold text-green-800">Patient Information Found</h4>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-8">
+                <div className="grid gap-6">
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-green-700">Name</p>
-                    <p className="text-lg font-medium text-gray-900">{formData.name}</p>
+                    <p className="text-base sm:text-lg font-medium text-gray-900">{formData.name}</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-green-700">Phone</p>
-                    <p className="text-lg font-medium text-gray-900">{formData.phone}</p>
+                    <p className="text-base sm:text-lg font-medium text-gray-900">{formData.phone}</p>
                   </div>
                 </div>
               </motion.div>
@@ -250,14 +250,14 @@ export function BookingForm({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="space-y-6"
+            className="space-y-6 w-full"
           >
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-2xl shadow-md border border-gray-200">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 sm:p-8 rounded-2xl shadow-md border border-gray-200">
               <div className="flex items-center justify-between mb-8">
                 <motion.h3 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="text-2xl font-semibold text-gray-800"
+                  className="text-xl sm:text-2xl font-semibold text-gray-800"
                 >
                   New Patient Registration
                 </motion.h3>
@@ -275,7 +275,7 @@ export function BookingForm({
               
               <motion.div 
                 variants={itemVariants}
-                className="grid md:grid-cols-2 gap-8"
+                className="grid gap-6"
               >
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">Full Name</label>
@@ -285,11 +285,11 @@ export function BookingForm({
                       name="name"
                       value={formData.name}
                       onChange={onInputChange}
-                      className="w-full px-6 py-4 pl-12 text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md"
+                      className="w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md"
                       required
                       disabled={isLoading}
                     />
-                    <User className="absolute left-4 top-4 h-6 w-6 text-gray-400" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
                   </div>
                 </div>
 
@@ -301,11 +301,11 @@ export function BookingForm({
                       name="phone"
                       value={formData.phone}
                       onChange={onInputChange}
-                      className="w-full px-6 py-4 pl-12 text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md"
+                      className="w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md"
                       required
                       disabled={isLoading}
                     />
-                    <Phone className="absolute left-4 top-4 h-6 w-6 text-gray-400" />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
                   </div>
                 </div>
               </motion.div>
@@ -334,7 +334,7 @@ export function BookingForm({
             type="submit"
             disabled={isLoading}
             className={`
-              w-full py-5 px-8 rounded-xl font-medium text-xl
+              w-full py-5 px-8 rounded-xl font-medium text-lg sm:text-xl
               transition-all duration-300
               ${isLoading 
                 ? 'bg-blue-400 cursor-not-allowed' 
