@@ -84,7 +84,11 @@ export default function AppointmentBooking() {
     
     setIsFetchingSlots(true);
     try {
-      const dateStr = date.toISOString().split('T')[0];
+      // Format the date in UTC to avoid timezone issues
+      const dateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
+        .toISOString()
+        .split('T')[0];
+
       const { data: appointments, error } = await supabase
         .from('appointments')
         .select('appointment_time')
@@ -142,7 +146,10 @@ export default function AppointmentBooking() {
       }, payload => {
         if (selectedDate) {
           const bookingDate = payload.new.appointment_date;
-          const selectedDateStr = selectedDate.toISOString().split('T')[0];
+          // Format the selected date in UTC
+          const selectedDateStr = new Date(selectedDate.getTime() - (selectedDate.getTimezoneOffset() * 60000))
+            .toISOString()
+            .split('T')[0];
           
           if (bookingDate === selectedDateStr) {
             fetchBookingCounts(selectedDate);
@@ -219,8 +226,12 @@ export default function AppointmentBooking() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Format the date in UTC
+      const dateStr = new Date(selectedDate.getTime() - (selectedDate.getTimezoneOffset() * 60000))
+        .toISOString()
+        .split('T')[0];
+
       // Check current booking count
-      const dateStr = selectedDate.toISOString().split('T')[0];
       const { data: existingBookings } = await supabase
         .from('appointments')
         .select('id')
