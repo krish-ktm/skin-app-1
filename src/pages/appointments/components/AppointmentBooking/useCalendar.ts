@@ -42,6 +42,7 @@ export function useCalendar() {
   return {
     currentDate,
     selectedDate,
+    setSelectedDate,
     handlePrevMonth,
     handleNextMonth,
     handleDateSelect,

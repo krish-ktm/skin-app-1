@@ -5,7 +5,10 @@ import { supabase } from '../../../../lib/supabase';
 import { Calendar } from '../Calendar';
 import { TimeSlots } from '../TimeSlots';
 import { BookingForm } from '../BookingForm';
-import { BookingConfirmation } from '../BookingConfirmation';
+import { ErrorMessage } from '../BookingForm/ErrorMessage';
+import { PatientTypeSelection } from '../BookingForm/PatientTypeSelection';
+import { ReturningPatientForm } from '../BookingForm/ReturningPatientForm';
+import { NewPatientForm } from '../BookingForm/NewPatientForm';
 import { useAppointmentBooking } from '../../hooks/useAppointmentBooking';
 import { useAppointmentForm } from '../../hooks/useAppointmentForm';
 import { useAppointmentSlots } from '../../hooks/useAppointmentSlots';
@@ -20,6 +23,7 @@ export default function AppointmentBooking() {
   const {
     currentDate,
     selectedDate,
+    setSelectedDate,
     handlePrevMonth,
     handleNextMonth,
     handleDateSelect,
@@ -28,6 +32,7 @@ export default function AppointmentBooking() {
 
   const {
     formData,
+    setFormData,
     isSearchingCase,
     searchError,
     handleInputChange,
@@ -149,17 +154,41 @@ export default function AppointmentBooking() {
             exit="exit"
             variants={pageTransition}
           >
-            <BookingConfirmation
-              appointment={bookingStatus.appointment}
-              onBookAnother={() => {
-                setBookingStatus({});
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                setSelectedDate(today);
-                setIsReturningPatient(null);
-                setFormData({ name: '', phone: '', caseId: '' });
-              }}
-            />
+            <div className="text-center p-4 sm:p-6 bg-green-50 rounded-lg">
+              <h3 className="text-xl font-semibold text-green-800 mb-4">Booking Confirmed!</h3>
+              <div className="space-y-3 text-left max-w-md mx-auto bg-white p-4 rounded-lg border border-green-200">
+                <p className="font-mono bg-green-100 p-2 rounded text-sm sm:text-base">
+                  Case ID: {bookingStatus.appointment.case_id}
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-sm sm:text-base">
+                  <p className="text-gray-600">Name:</p>
+                  <p className="font-medium">{bookingStatus.appointment.name}</p>
+                  <p className="text-gray-600">Phone:</p>
+                  <p className="font-medium">{bookingStatus.appointment.phone}</p>
+                  <p className="text-gray-600">Date:</p>
+                  <p className="font-medium">
+                    {new Date(bookingStatus.appointment.appointment_date).toLocaleDateString()}
+                  </p>
+                  <p className="text-gray-600">Time:</p>
+                  <p className="font-medium">{bookingStatus.appointment.appointment_time}</p>
+                </div>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    setBookingStatus({});
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    setSelectedDate(today);
+                    setIsReturningPatient(null);
+                    setFormData({ name: '', phone: '', caseId: '' });
+                  }}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Book Another Appointment
+                </button>
+              </div>
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -188,20 +217,38 @@ export default function AppointmentBooking() {
               />
             </div>
 
-            <BookingForm
-              formData={formData}
-              onInputChange={handleInputChange}
-              onCaseSearch={handleCaseSearch}
-              isSearchingCase={isSearchingCase}
-              searchError={searchError}
-              isLoading={isLoading}
-              onSubmit={handleSubmit}
-              errorMessage={bookingStatus.message}
-              isReturningPatient={isReturningPatient}
-              setIsReturningPatient={setIsReturningPatient}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-            />
+            <AnimatePresence mode="wait">
+              {isReturningPatient === null ? (
+                <PatientTypeSelection
+                  onSelect={setIsReturningPatient}
+                />
+              ) : isReturningPatient ? (
+                <ReturningPatientForm
+                  formData={formData}
+                  onInputChange={handleInputChange}
+                  onCaseSearch={handleCaseSearch}
+                  isSearchingCase={isSearchingCase}
+                  searchError={searchError}
+                  onBack={() => setIsReturningPatient(null)}
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading}
+                  errorMessage={bookingStatus.message}
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                />
+              ) : (
+                <NewPatientForm
+                  formData={formData}
+                  onInputChange={handleInputChange}
+                  onBack={() => setIsReturningPatient(null)}
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading}
+                  errorMessage={bookingStatus.message}
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                />
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
