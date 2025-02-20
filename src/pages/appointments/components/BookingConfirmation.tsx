@@ -10,10 +10,9 @@ interface Appointment {
 
 interface BookingConfirmationProps {
   appointment: Appointment;
-  onBookAnother: () => void;
 }
 
-export function BookingConfirmation({ appointment, onBookAnother }: BookingConfirmationProps) {
+export function BookingConfirmation({ appointment }: BookingConfirmationProps) {
   return (
     <div className="text-center p-4 sm:p-6 bg-green-50 rounded-lg">
       <h3 className="text-xl font-semibold text-green-800 mb-4">Booking Confirmed!</h3>
@@ -34,12 +33,6 @@ export function BookingConfirmation({ appointment, onBookAnother }: BookingConfi
           <p className="font-medium">{appointment.appointment_time}</p>
         </div>
       </div>
-      <button
-        onClick={onBookAnother}
-        className="mt-6 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
-      >
-        Book Another Appointment
-      </button>
     </div>
   );
 }

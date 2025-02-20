@@ -163,13 +163,6 @@ export default function AppointmentBooking() {
     }
   };
 
-  // Fetch slots when selected date changes or when returning for another booking
-  useEffect(() => {
-    if (selectedDate && isInitialized) {
-      fetchBookingCounts(selectedDate);
-    }
-  }, [selectedDate, bookingStatus.success, isInitialized]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -264,10 +257,6 @@ export default function AppointmentBooking() {
         appointment,
       });
 
-      // Reset form
-      setFormData({ name: '', phone: '', caseId: '' });
-      setSelectedDate(null);
-      setSelectedTime('');
       showTemporaryNotification('Appointment booked successfully!', 'success');
     } catch (error: any) {
       setBookingStatus({
@@ -304,8 +293,8 @@ export default function AppointmentBooking() {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     if (!isDateDisabled(newDate)) {
       setSelectedDate(newDate);
-      setSelectedTime(''); // Reset selected time when date changes
-      fetchBookingCounts(newDate); // Fetch slots immediately when date is selected
+      setSelectedTime('');
+      fetchBookingCounts(newDate);
     }
   };
 
@@ -353,13 +342,6 @@ export default function AppointmentBooking() {
               >
                 <BookingConfirmation
                   appointment={bookingStatus.appointment}
-                  onBookAnother={() => {
-                    setBookingStatus({});
-                    // Reset the selected date to today when booking another appointment
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    setSelectedDate(today);
-                  }}
                 />
               </motion.div>
             ) : (
