@@ -53,7 +53,6 @@ export default function AppointmentBooking() {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isReturningPatient, setIsReturningPatient] = useState(false);
 
   const showTemporaryNotification = useCallback((message: string, type: 'success' | 'error') => {
     setNotificationMessage(message);
@@ -192,7 +191,6 @@ export default function AppointmentBooking() {
         name: data.name,
         phone: data.phone,
       }));
-      setIsReturningPatient(true);
       showTemporaryNotification('Patient information found!', 'success');
     } catch (error: any) {
       setSearchError(error.message);
@@ -215,7 +213,7 @@ export default function AppointmentBooking() {
     }
 
     setIsLoading(true);
-    const caseId = isReturningPatient ? formData.caseId : nanoid(10).toUpperCase();
+    const caseId = nanoid(10).toUpperCase();
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
