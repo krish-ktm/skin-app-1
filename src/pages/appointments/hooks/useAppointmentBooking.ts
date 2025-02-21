@@ -55,7 +55,7 @@ export function useAppointmentBooking(
         phone: formData.phone,
         appointment_date: dateStr,
         appointment_time: selectedTime,
-        gender: 'male', // Default value as per schema
+        gender: formData.gender, // Use the selected gender from the form
         user_id: user.id
       };
 
