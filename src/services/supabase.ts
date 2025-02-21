@@ -16,7 +16,9 @@ export const appointmentService = {
       .from('appointments')
       .select('*')
       .eq('case_id', caseId.toUpperCase())
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
     if (error) throw error;
     return data;
