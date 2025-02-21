@@ -117,7 +117,9 @@ export default function AppointmentBooking() {
 
   return (
     <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-xl">
-      <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Book an Appointment</h2>
+      {!bookingStatus.success && (
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Book an Appointment</h2>
+      )}
       
       <AnimatePresence>
         {showNotification && (

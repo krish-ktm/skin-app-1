@@ -54,7 +54,7 @@ export function ReturningPatientForm({
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className={`bg-gradient-to-br ${patientFound ? 'from-green-50 to-green-100 border-green-200' : 'from-blue-50 to-blue-100 border-blue-200'} p-6 sm:p-8 rounded-2xl shadow-md border`}>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <motion.h3 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
