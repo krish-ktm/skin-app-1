@@ -6,12 +6,11 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminTimeSlots from './pages/admin/AdminTimeSlots';
-import AdminUsers from './pages/admin/AdminUsers';
 import { AdminAuthProvider, useAdminAuth } from './contexts/AdminAuthContext';
-import { AdminProvider } from './contexts/AdminContext';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAdminAuth();
+  
   
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -28,22 +27,19 @@ function App() {
   return (
     <BrowserRouter>
       <AdminAuthProvider>
-        <AdminProvider>
-          <Routes>
-            <Route path="/" element={<AppointmentPage />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<AdminDashboard />} />
-              <Route path="bookings" element={<AdminBookings />} />
-              <Route path="time-slots" element={<AdminTimeSlots />} />
-              <Route path="users" element={<AdminUsers />} />
-            </Route>
-          </Routes>
-        </AdminProvider>
+        <Routes>
+          <Route path="/" element={<AppointmentPage />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<AdminDashboard />} />
+            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="time-slots" element={<AdminTimeSlots />} />
+          </Route>
+        </Routes>
       </AdminAuthProvider>
     </BrowserRouter>
   );

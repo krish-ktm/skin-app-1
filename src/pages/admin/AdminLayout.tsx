@@ -1,12 +1,10 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, List, Clock, Users, LogOut } from 'lucide-react';
+import { Calendar, List, Clock, LogOut } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
-import { useAdmin } from '../../contexts/AdminContext';
 
 export default function AdminLayout() {
   const { logout } = useAdminAuth();
-  const { permissions } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -64,19 +62,6 @@ export default function AdminLayout() {
                   <Clock className="h-4 w-4 mr-2" />
                   Time Slots
                 </Link>
-                {(permissions.all || permissions.users?.read) && (
-                  <Link
-                    to="/admin/users"
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      isActive('/admin/users')
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    }`}
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Admin Users
-                  </Link>
-                )}
               </div>
             </div>
             <div className="flex items-center">
