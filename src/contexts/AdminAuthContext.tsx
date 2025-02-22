@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { adminService, type AdminUser } from '../services/admin';
 
 interface AdminAuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
+  admin: AdminUser | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
@@ -12,6 +13,7 @@ interface AdminAuthContextType {
 const AdminAuthContext = createContext<AdminAuthContextType>({
   isAuthenticated: false,
   isLoading: true,
+  admin: null,
   login: async () => {},
   logout: async () => {},
   error: null,
@@ -21,26 +23,19 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [admin, setAdmin] = useState<AdminUser | null>(null);
 
   useEffect(() => {
-    checkUser();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    checkAdmin();
   }, []);
 
-  async function checkUser() {
+  async function checkAdmin() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+      const admin = await adminService.getCurrentAdmin();
+      setIsAuthenticated(!!admin);
+      setAdmin(admin);
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('Error checking admin status:', error);
     } finally {
       setIsLoading(false);
     }
@@ -49,8 +44,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   async function login(email: string, password: string) {
     try {
       setError(null);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const admin = await adminService.login(email, password);
+      localStorage.setItem('admin', JSON.stringify(admin));
+      setAdmin(admin);
+      setIsAuthenticated(true);
     } catch (error: any) {
       setError(error.message);
       throw error;
@@ -60,8 +57,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   async function logout() {
     try {
       setError(null);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await adminService.logout();
+      setAdmin(null);
+      setIsAuthenticated(false);
     } catch (error: any) {
       setError(error.message);
       throw error;
@@ -72,6 +70,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     <AdminAuthContext.Provider value={{
       isAuthenticated,
       isLoading,
+      admin,
       login,
       logout,
       error,
