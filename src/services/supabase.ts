@@ -25,16 +25,56 @@ export const appointmentService = {
   },
 
   async getAppointmentsByDate(date: string) {
-    const { data, error } = await supabase
+    // First check if the day is disabled
+    const { data: daySettings } = await supabase
+      .from('time_slot_settings')
+      .select('is_disabled')
+      .eq('date', date)
+      .is('time', null);
+
+    // If there's a day-level setting and it's disabled, return empty array
+    if (daySettings && daySettings.length > 0 && daySettings[0].is_disabled) {
+      return [];
+    }
+
+    // Get disabled time slots
+    const { data: slotSettings, error: slotError } = await supabase
+      .from('time_slot_settings')
+      .select('time')
+      .eq('date', date)
+      .eq('is_disabled', true)
+      .not('time', 'is', null);
+
+    if (slotError) throw slotError;
+    const disabledTimes = new Set(slotSettings?.map(s => s.time) || []);
+
+    // Get appointments for available slots
+    const { data: appointments, error: aptError } = await supabase
       .from('appointments')
       .select('appointment_time')
       .eq('appointment_date', date);
 
-    if (error) throw error;
-    return data;
+    if (aptError) throw aptError;
+
+    // Filter out appointments for disabled slots
+    return appointments?.filter(apt => !disabledTimes.has(apt.appointment_time)) || [];
   },
 
   async createAppointment(appointment: Omit<Appointment, 'id' | 'created_at'>) {
+    // Check if the day or time slot is disabled
+    const { data: settings, error: settingsError } = await supabase
+      .from('time_slot_settings')
+      .select('*')
+      .eq('date', appointment.appointment_date)
+      .or(`time.is.null,time.eq.${appointment.appointment_time}`);
+
+    if (settingsError) throw settingsError;
+
+    const isDayOrSlotDisabled = settings?.some(s => s.is_disabled);
+    if (isDayOrSlotDisabled) {
+      throw new Error('This time slot is not available for booking');
+    }
+
     const { error } = await supabase
       .from('appointments')
       .insert(appointment);
