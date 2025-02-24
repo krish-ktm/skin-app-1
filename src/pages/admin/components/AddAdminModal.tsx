@@ -41,13 +41,14 @@ export function AddAdminModal({ isOpen, onClose, onSuccess }: AddAdminModalProps
       setIsLoading(true);
       
       // Check if email already exists
-      const { data: existingUser } = await supabase
+      const { data: existingUsers, error: checkError } = await supabase
         .from('admin_users')
         .select('id')
-        .eq('email', formData.email.toLowerCase())
-        .single();
+        .eq('email', formData.email.toLowerCase());
 
-      if (existingUser) {
+      if (checkError) throw checkError;
+      
+      if (existingUsers && existingUsers.length > 0) {
         throw new Error('An admin with this email already exists');
       }
 
