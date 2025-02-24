@@ -42,3 +42,25 @@ export function toUTCDateString(date: Date): string {
     .toISOString()
     .split('T')[0];
 }
+
+export function isTimeSlotExpired(time: string, date: Date): boolean {
+  const [hours, minutes] = time.split(':').map(Number);
+  const now = new Date();
+  const slotDate = new Date(date);
+  slotDate.setHours(hours, minutes, 0, 0);
+  
+  // Convert both dates to IST for comparison
+  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+  const nowIST = new Date(now.getTime() + istOffset);
+  const slotIST = new Date(slotDate.getTime() + istOffset);
+  
+  return nowIST >= slotIST;
+}
+
+export function formatTimeSlot(time: string): string {
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+}

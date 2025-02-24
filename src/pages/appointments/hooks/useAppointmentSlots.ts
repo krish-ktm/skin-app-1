@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { appointmentService } from '../../../services/supabase';
-import { INITIAL_TIME_SLOTS } from '../../../constants';
+import { INITIAL_TIME_SLOTS, TIME_ZONE } from '../../../constants';
 import type { TimeSlot } from '../../../types';
-import { toUTCDateString } from '../../../utils/date';
+import { toUTCDateString, isTimeSlotExpired } from '../../../utils/date';
 
 export function useAppointmentSlots() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>(INITIAL_TIME_SLOTS);
@@ -23,11 +23,16 @@ export function useAppointmentSlots() {
       });
 
       // Update available slots
-      const updatedSlots = INITIAL_TIME_SLOTS.map(slot => ({
-        ...slot,
-        bookingCount: counts[slot.time] || 0,
-        available: slot.available && (counts[slot.time] || 0) < 4
-      }));
+      const updatedSlots = INITIAL_TIME_SLOTS.map(slot => {
+        const isExpired = isTimeSlotExpired(slot.time, date);
+        return {
+          ...slot,
+          bookingCount: counts[slot.time] || 0,
+          available: slot.available && 
+                    (counts[slot.time] || 0) < 4 && 
+                    !isExpired
+        };
+      });
 
       setAvailableSlots(updatedSlots);
     } catch (error) {

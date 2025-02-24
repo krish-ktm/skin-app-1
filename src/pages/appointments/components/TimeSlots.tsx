@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock } from 'lucide-react';
 import { PulseLoader } from 'react-spinners';
+import { formatTimeSlot } from '../../../utils/date';
 
 export interface TimeSlot {
   time: string;
@@ -51,9 +52,9 @@ export function TimeSlots({
             <div className="flex flex-col items-center justify-center gap-1">
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                {slot.time}
+                {formatTimeSlot(slot.time)}
               </div>
-              {slot.bookingCount !== undefined && (
+              {slot.available && slot.bookingCount !== undefined && (
                 <span className="text-xs">
                   {4 - slot.bookingCount} slots left
                 </span>
