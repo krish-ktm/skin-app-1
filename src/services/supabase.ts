@@ -25,54 +25,86 @@ export const appointmentService = {
   },
 
   async getAppointmentsByDate(date: string) {
-    // First check if the day is disabled
-    const { data: daySettings } = await supabase
-      .from('time_slot_settings')
-      .select('is_disabled')
-      .eq('date', date)
-      .is('time', null);
+    try {
+      // First check if the day is disabled
+      const { data: daySettings, error: dayError } = await supabase
+        .from('time_slot_settings')
+        .select('is_disabled')
+        .eq('date', date)
+        .is('time', null)
+        .single();
 
-    // If there's a day-level setting and it's disabled, return empty array
-    if (daySettings && daySettings.length > 0 && daySettings[0].is_disabled) {
-      return [];
+      if (dayError && dayError.code !== 'PGRST116') throw dayError;
+      
+      // If the day is disabled, return empty array
+      if (daySettings?.is_disabled) {
+        return [];
+      }
+
+      // Get disabled time slots
+      const { data: slotSettings, error: slotError } = await supabase
+        .from('time_slot_settings')
+        .select('time')
+        .eq('date', date)
+        .eq('is_disabled', true)
+        .not('time', 'is', null);
+
+      if (slotError) throw slotError;
+
+      // Get appointments for the date
+      const { data: appointments, error: aptError } = await supabase
+        .from('appointments')
+        .select('appointment_time')
+        .eq('appointment_date', date);
+
+      if (aptError) throw aptError;
+
+      // Filter out appointments for disabled slots
+      const disabledTimes = new Set(slotSettings?.map(s => s.time) || []);
+      return appointments?.filter(apt => !disabledTimes.has(apt.appointment_time)) || [];
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      throw error;
     }
-
-    // Get disabled time slots
-    const { data: slotSettings, error: slotError } = await supabase
-      .from('time_slot_settings')
-      .select('time')
-      .eq('date', date)
-      .eq('is_disabled', true)
-      .not('time', 'is', null);
-
-    if (slotError) throw slotError;
-    const disabledTimes = new Set(slotSettings?.map(s => s.time) || []);
-
-    // Get appointments for available slots
-    const { data: appointments, error: aptError } = await supabase
-      .from('appointments')
-      .select('appointment_time')
-      .eq('appointment_date', date);
-
-    if (aptError) throw aptError;
-
-    // Filter out appointments for disabled slots
-    return appointments?.filter(apt => !disabledTimes.has(apt.appointment_time)) || [];
   },
 
   async createAppointment(appointment: Omit<Appointment, 'id' | 'created_at'>) {
-    // Check if the day or time slot is disabled
-    const { data: settings, error: settingsError } = await supabase
+    // Check if the day is disabled
+    const { data: daySettings, error: dayError } = await supabase
       .from('time_slot_settings')
-      .select('*')
+      .select('is_disabled')
       .eq('date', appointment.appointment_date)
-      .or(`time.is.null,time.eq.${appointment.appointment_time}`);
+      .is('time', null)
+      .single();
 
-    if (settingsError) throw settingsError;
+    if (dayError && dayError.code !== 'PGRST116') throw dayError;
+    if (daySettings?.is_disabled) {
+      throw new Error('This day is not available for booking');
+    }
 
-    const isDayOrSlotDisabled = settings?.some(s => s.is_disabled);
-    if (isDayOrSlotDisabled) {
+    // Check if the specific time slot is disabled
+    const { data: timeSettings, error: timeError } = await supabase
+      .from('time_slot_settings')
+      .select('is_disabled')
+      .eq('date', appointment.appointment_date)
+      .eq('time', appointment.appointment_time)
+      .single();
+
+    if (timeError && timeError.code !== 'PGRST116') throw timeError;
+    if (timeSettings?.is_disabled) {
       throw new Error('This time slot is not available for booking');
+    }
+
+    // Check current booking count for the time slot
+    const { data: existingBookings, error: countError } = await supabase
+      .from('appointments')
+      .select('id')
+      .eq('appointment_date', appointment.appointment_date)
+      .eq('appointment_time', appointment.appointment_time);
+
+    if (countError) throw countError;
+    if (existingBookings && existingBookings.length >= 4) {
+      throw new Error('This time slot is now full. Please select another time.');
     }
 
     const { error } = await supabase
