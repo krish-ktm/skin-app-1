@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Clock, Ban, Calendar as CalendarIcon, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { INITIAL_TIME_SLOTS } from '../../constants';
 
 interface TimeSlotSetting {
   id: string;
@@ -17,10 +18,7 @@ export default function AdminTimeSlots() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [timeSlots, setTimeSlots] = useState([
-    '09:00', '10:00', '11:00', '12:00',
-    '14:00', '15:00', '16:00', '17:00'
-  ]);
+  const [timeSlots] = useState(INITIAL_TIME_SLOTS.map(slot => slot.time));
   const [disabledSlots, setDisabledSlots] = useState<TimeSlotSetting[]>([]);
   const [isDayDisabled, setIsDayDisabled] = useState(false);
   const [notification, setNotification] = useState<{
@@ -178,6 +176,14 @@ export default function AdminTimeSlots() {
     );
   };
 
+  const formatTimeSlot = (time: string): string => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -270,7 +276,7 @@ export default function AdminTimeSlots() {
                           `}
                         >
                           <Clock className="h-4 w-4" />
-                          <span>{time}</span>
+                          <span>{formatTimeSlot(time)}</span>
                           <span className="text-xs">
                             {disabled ? 'Disabled' : 'Available'}
                           </span>
