@@ -39,12 +39,20 @@ export default function AdminTimeSlots() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // Helper function to convert Date to YYYY-MM-DD format in local timezone
+  const formatDateToLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const fetchTimeSlotSettings = async () => {
     if (!selectedDate) return;
 
     setIsLoading(true);
     try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const dateStr = formatDateToLocal(selectedDate);
       const { data, error } = await supabase
         .from('time_slot_settings')
         .select('*')
@@ -84,12 +92,12 @@ export default function AdminTimeSlots() {
   const toggleTimeSlot = async (time: string) => {
     if (!selectedDate) return;
 
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    const dateStr = formatDateToLocal(selectedDate);
     const existingSetting = disabledSlots.find(slot => slot.time === time);
     
     try {
       if (existingSetting) {
-        // Update existing setting
+        // Update existing setting - this will trigger the cleanup if is_disabled is set to false
         const { error } = await supabase
           .from('time_slot_settings')
           .update({ is_disabled: !existingSetting.is_disabled })
@@ -97,7 +105,7 @@ export default function AdminTimeSlots() {
 
         if (error) throw error;
       } else {
-        // Create new setting
+        // Create new setting only if we're disabling the slot
         const { error } = await supabase
           .from('time_slot_settings')
           .insert({
@@ -120,20 +128,31 @@ export default function AdminTimeSlots() {
   const toggleFullDay = async () => {
     if (!selectedDate) return;
 
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    const dateStr = formatDateToLocal(selectedDate);
     const existingSetting = disabledSlots.find(slot => slot.time === null);
     
     try {
       if (existingSetting) {
-        // Update existing setting
+        // Update existing setting - this will trigger the cleanup if is_disabled is set to false
         const { error } = await supabase
           .from('time_slot_settings')
           .update({ is_disabled: !existingSetting.is_disabled })
           .eq('id', existingSetting.id);
 
         if (error) throw error;
+
+        // If we're enabling the full day, also remove all individual time slot settings
+        if (!existingSetting.is_disabled) {
+          const { error: deleteError } = await supabase
+            .from('time_slot_settings')
+            .delete()
+            .eq('date', dateStr)
+            .neq('id', existingSetting.id);
+
+          if (deleteError) throw deleteError;
+        }
       } else {
-        // Create new setting
+        // Create new setting only if we're disabling the day
         const { error } = await supabase
           .from('time_slot_settings')
           .insert({
