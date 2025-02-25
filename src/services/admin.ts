@@ -20,31 +20,53 @@ export interface AdminUser {
 
 export const adminService = {
   async login(email: string, password: string): Promise<AdminUser> {
-    const { data: admin, error } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('email', email.toLowerCase())
-      .single();
+    try {
+      const { data: admin, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .single();
 
-    if (error) throw new Error('Invalid email or password');
-    if (!admin) throw new Error('Invalid email or password');
+      if (error) {
+        console.error('Database error:', error);
+        throw new Error('Invalid email or password');
+      }
+      
+      if (!admin) {
+        throw new Error('Invalid email or password');
+      }
 
-    const isValid = await bcrypt.compare(password, admin.password_hash);
-    if (!isValid) throw new Error('Invalid email or password');
+      const isValid = await bcrypt.compare(password, admin.password_hash);
+      if (!isValid) {
+        throw new Error('Invalid email or password');
+      }
 
-    // Update last login
-    await supabase
-      .from('admin_users')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', admin.id);
+      // Update last login
+      const { error: updateError } = await supabase
+        .from('admin_users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', admin.id);
 
-    return {
-      id: admin.id,
-      email: admin.email,
-      name: admin.name,
-      created_at: admin.created_at,
-      last_login: admin.last_login
-    };
+      if (updateError) {
+        console.error('Error updating last login:', updateError);
+      }
+
+      const adminUser: AdminUser = {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        created_at: admin.created_at,
+        last_login: admin.last_login
+      };
+
+      // Store admin data in localStorage
+      localStorage.setItem('admin', JSON.stringify(adminUser));
+
+      return adminUser;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   },
 
   async getCurrentAdmin(): Promise<AdminUser | null> {
