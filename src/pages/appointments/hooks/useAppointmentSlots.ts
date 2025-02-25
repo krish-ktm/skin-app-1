@@ -22,19 +22,13 @@ export function useAppointmentSlots() {
         counts[apt.appointment_time] = (counts[apt.appointment_time] || 0) + 1;
       });
 
-      // Get the set of available times from appointments
-      const availableTimes = new Set(appointments.map(apt => apt.appointment_time));
-
       // Update available slots
       const updatedSlots = INITIAL_TIME_SLOTS.map(slot => {
         const isExpired = isTimeSlotExpired(slot.time, date);
-        const isAvailable = availableTimes.has(slot.time);
         return {
           ...slot,
           bookingCount: counts[slot.time] || 0,
-          available: isAvailable && 
-                    (counts[slot.time] || 0) < 4 && 
-                    !isExpired
+          available: !isExpired && (counts[slot.time] || 0) < 4
         };
       });
 

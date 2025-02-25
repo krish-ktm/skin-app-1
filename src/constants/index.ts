@@ -7,8 +7,8 @@ export const MONTHS = [
 
 // Time Slots
 export const BUSINESS_HOURS = {
-  start: 0, // 9 AM
-  end: 17, // 5 PM
+  start: 9, // 9 AM
+  end: 23, // 5 PM
 };
 
 export const TIME_ZONE = 'Asia/Kolkata'; // IST timezone
