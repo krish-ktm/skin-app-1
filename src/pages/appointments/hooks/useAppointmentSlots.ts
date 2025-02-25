@@ -7,14 +7,16 @@ import { toUTCDateString, isTimeSlotExpired } from '../../../utils/date';
 export function useAppointmentSlots() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>(INITIAL_TIME_SLOTS);
   const [isFetchingSlots, setIsFetchingSlots] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchBookingCounts = useCallback(async (date: Date) => {
     if (!date) return;
     
     setIsFetchingSlots(true);
+    setError(null);
     try {
       const dateStr = toUTCDateString(date);
-      const appointments = await appointmentService.getAppointmentsByDate(dateStr);
+      const { appointments, disabledSlots } = await appointmentService.getAppointmentsByDate(dateStr);
 
       // Count bookings for each time slot
       const counts: { [key: string]: number } = {};
@@ -25,17 +27,19 @@ export function useAppointmentSlots() {
       // Update available slots
       const updatedSlots = INITIAL_TIME_SLOTS.map(slot => {
         const isExpired = isTimeSlotExpired(slot.time, date);
+        const isDisabled = disabledSlots.some(ds => ds.time === slot.time);
         return {
           ...slot,
           bookingCount: counts[slot.time] || 0,
-          available: !isExpired && (counts[slot.time] || 0) < 4
+          available: !isExpired && !isDisabled && (counts[slot.time] || 0) < 4
         };
       });
 
       setAvailableSlots(updatedSlots);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating slots:', error);
-      throw new Error('Error updating time slots. Please try again.');
+      setError(error.message);
+      setAvailableSlots([]);
     } finally {
       setIsFetchingSlots(false);
     }
@@ -44,6 +48,7 @@ export function useAppointmentSlots() {
   return {
     availableSlots,
     isFetchingSlots,
+    error,
     fetchBookingCounts
   };
 }

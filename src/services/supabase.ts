@@ -33,7 +33,27 @@ export const appointmentService = {
         .eq('appointment_date', date);
 
       if (aptError) throw aptError;
-      return appointments || [];
+
+      // Get disabled slots for the date
+      const { data: disabledSlots, error: disabledError } = await supabase
+        .from('time_slot_settings')
+        .select('time, is_disabled')
+        .eq('date', date)
+        .eq('is_disabled', true);
+
+      if (disabledError) throw disabledError;
+
+      // Check if the entire day is disabled
+      const isDayDisabled = disabledSlots?.some(slot => slot.time === null);
+      
+      if (isDayDisabled) {
+        throw new Error('This day is not available for bookings');
+      }
+
+      return {
+        appointments: appointments || [],
+        disabledSlots: disabledSlots || []
+      };
     } catch (error) {
       console.error('Error fetching appointments:', error);
       throw error;
@@ -41,6 +61,23 @@ export const appointmentService = {
   },
 
   async createAppointment(appointment: Omit<Appointment, 'id' | 'created_at'>) {
+    // Check if the slot or day is disabled
+    const { data: disabledSlots, error: disabledError } = await supabase
+      .from('time_slot_settings')
+      .select('time')
+      .eq('date', appointment.appointment_date)
+      .eq('is_disabled', true);
+
+    if (disabledError) throw disabledError;
+
+    const isDayOrSlotDisabled = disabledSlots?.some(
+      slot => slot.time === null || slot.time === appointment.appointment_time
+    );
+
+    if (isDayOrSlotDisabled) {
+      throw new Error('This time slot is not available for booking');
+    }
+
     // Check current booking count for the time slot
     const { data: existingBookings, error: countError } = await supabase
       .from('appointments')

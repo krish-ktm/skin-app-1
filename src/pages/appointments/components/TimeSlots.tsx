@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, AlertCircle } from 'lucide-react';
 import { PulseLoader } from 'react-spinners';
 import { formatTimeSlot } from '../../../utils/date';
 
@@ -14,6 +14,7 @@ interface TimeSlotsProps {
   selectedTime: string;
   onTimeSelect: (time: string) => void;
   isLoading: boolean;
+  error?: string | null;
 }
 
 export function TimeSlots({
@@ -21,7 +22,22 @@ export function TimeSlots({
   selectedTime,
   onTimeSelect,
   isLoading,
+  error,
 }: TimeSlotsProps) {
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Select Time</label>
+        <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-5 w-5" />
+            <p className="text-sm">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">

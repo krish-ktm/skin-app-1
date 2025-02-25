@@ -42,6 +42,7 @@ export default function AppointmentBooking() {
   const {
     availableSlots,
     isFetchingSlots,
+    error: slotsError,
     fetchBookingCounts
   } = useAppointmentSlots();
 
@@ -92,20 +93,30 @@ export default function AppointmentBooking() {
     }
   }, [isInitialized, selectedDate, fetchBookingCounts]);
 
-  // Subscribe to real-time updates for appointments
+  // Subscribe to real-time updates
   useEffect(() => {
     if (!isInitialized) return;
 
     const subscription = supabase
-      .channel('appointments-changes')
+      .channel('any')
       .on('postgres_changes', { 
-        event: 'INSERT', 
+        event: '*', 
         schema: 'public', 
         table: 'appointments' 
-      }, payload => {
+      }, () => {
         if (selectedDate) {
           fetchBookingCounts(selectedDate);
-          showTemporaryNotification('A new booking has been made. Time slots updated.', 'info');
+          showTemporaryNotification('Booking information updated', 'info');
+        }
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'time_slot_settings'
+      }, () => {
+        if (selectedDate) {
+          fetchBookingCounts(selectedDate);
+          showTemporaryNotification('Time slot availability updated', 'info');
         }
       })
       .subscribe();
@@ -114,6 +125,11 @@ export default function AppointmentBooking() {
       subscription.unsubscribe();
     };
   }, [selectedDate, isInitialized, fetchBookingCounts, showTemporaryNotification]);
+
+  // Reset selected time when date changes or when slots are updated
+  useEffect(() => {
+    setSelectedTime('');
+  }, [selectedDate, availableSlots]);
 
   return (
     <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-xl">
@@ -225,6 +241,7 @@ export default function AppointmentBooking() {
                 selectedTime={selectedTime}
                 onTimeSelect={setSelectedTime}
                 isLoading={isFetchingSlots}
+                error={slotsError}
               />
             </div>
 
