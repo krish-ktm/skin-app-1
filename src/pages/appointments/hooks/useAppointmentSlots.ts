@@ -8,6 +8,7 @@ export function useAppointmentSlots() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>(INITIAL_TIME_SLOTS);
   const [isFetchingSlots, setIsFetchingSlots] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDayDisabled, setIsDayDisabled] = useState(false);
 
   const fetchBookingCounts = useCallback(async (date: Date) => {
     if (!date) return;
@@ -17,6 +18,15 @@ export function useAppointmentSlots() {
     try {
       const dateStr = toUTCDateString(date);
       const { appointments, disabledSlots } = await appointmentService.getAppointmentsByDate(dateStr);
+
+      // Check if the entire day is disabled
+      const dayDisabled = disabledSlots?.some(slot => slot.time === null);
+      setIsDayDisabled(dayDisabled);
+
+      if (dayDisabled) {
+        setAvailableSlots([]);
+        throw new Error('This day is not available for bookings');
+      }
 
       // Count bookings for each time slot
       const counts: { [key: string]: number } = {};
@@ -49,6 +59,7 @@ export function useAppointmentSlots() {
     availableSlots,
     isFetchingSlots,
     error,
+    isDayDisabled,
     fetchBookingCounts
   };
 }
