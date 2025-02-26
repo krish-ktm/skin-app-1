@@ -8,7 +8,7 @@ import type { Booking, SortField, SortOrder, Filter, DateRange } from './types';
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -17,51 +17,79 @@ export default function AdminBookings() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>({ start: '', end: '' });
+  const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const itemsPerPage = 10;
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, searchTerm, sortField, sortOrder, filters, dateRange]);
+  }, []);
+
+  useEffect(() => {
+    // Apply filters, sorting, and pagination on the client side
+    let filteredData = [...allBookings];
+
+    // Apply search
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filteredData = filteredData.filter(booking => 
+        booking.name.toLowerCase().includes(searchLower) ||
+        booking.case_id.toLowerCase().includes(searchLower) ||
+        booking.phone.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply filters
+    filters.forEach(filter => {
+      if (filter.value) {
+        const filterLower = filter.value.toLowerCase();
+        filteredData = filteredData.filter(booking =>
+          String(booking[filter.field as keyof Booking]).toLowerCase().includes(filterLower)
+        );
+      }
+    });
+
+    // Apply date range
+    if (dateRange.start) {
+      filteredData = filteredData.filter(booking => 
+        booking.appointment_date >= dateRange.start
+      );
+    }
+    if (dateRange.end) {
+      filteredData = filteredData.filter(booking => 
+        booking.appointment_date <= dateRange.end
+      );
+    }
+
+    // Apply sorting
+    filteredData.sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      }
+      return aValue < bValue ? 1 : -1;
+    });
+
+    // Update total pages
+    setTotalPages(Math.ceil(filteredData.length / itemsPerPage));
+
+    // Apply pagination
+    const start = (currentPage - 1) * itemsPerPage;
+    const paginatedData = filteredData.slice(start, start + itemsPerPage);
+    setBookings(paginatedData);
+  }, [allBookings, currentPage, searchTerm, sortField, sortOrder, filters, dateRange]);
 
   async function fetchBookings() {
     try {
       setIsLoading(true);
-      let query = supabase
+      const { data, error } = await supabase
         .from('appointments')
-        .select('*', { count: 'exact' });
-
-      // Apply search
-      if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,case_id.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
-      }
-
-      // Apply filters
-      filters.forEach(filter => {
-        if (filter.value) {
-          query = query.ilike(filter.field, `%${filter.value}%`);
-        }
-      });
-
-      // Apply date range
-      if (dateRange.start) {
-        query = query.gte('appointment_date', dateRange.start);
-      }
-      if (dateRange.end) {
-        query = query.lte('appointment_date', dateRange.end);
-      }
-
-      // Apply sorting
-      query = query.order(sortField, { ascending: sortOrder === 'asc' });
-
-      // Apply pagination
-      query = query.range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
-
-      const { data, count, error } = await query;
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setBookings(data || []);
-      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
+      setAllBookings(data || []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
     } finally {
@@ -113,13 +141,19 @@ export default function AdminBookings() {
     <div className="space-y-6">
       <BookingsFilters
         searchTerm={searchTerm}
-        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        onSearchChange={(e) => {
+          setSearchTerm(e.target.value);
+          setCurrentPage(1);
+        }}
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters(!showFilters)}
         filters={filters}
         onFilterChange={handleFilterChange}
         dateRange={dateRange}
-        onDateRangeChange={setDateRange}
+        onDateRangeChange={(range) => {
+          setDateRange(range);
+          setCurrentPage(1);
+        }}
         onClearFilters={clearFilters}
       />
 
