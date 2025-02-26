@@ -1,7 +1,8 @@
-import React from 'react';
-import { Search, Filter, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Filter, X, Calendar } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import type { DateRange, Filter as FilterType } from '../../types';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface BookingsFiltersProps {
   searchTerm: string;
@@ -26,7 +27,17 @@ export function BookingsFilters({
   onDateRangeChange,
   onClearFilters,
 }: BookingsFiltersProps) {
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const hasActiveFilters = filters.length > 0 || dateRange.start || dateRange.end;
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   return (
     <>
@@ -63,42 +74,112 @@ export function BookingsFilters({
         </div>
       </div>
 
-      {showFilters && (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Gender</label>
-              <select
-                value={filters.find(f => f.field === 'gender')?.value || ''}
-                onChange={(e) => onFilterChange('gender', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">All</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Gender</label>
+                <select
+                  value={filters.find(f => f.field === 'gender')?.value || ''}
+                  onChange={(e) => onFilterChange('gender', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+
+              <div className="relative space-y-2 col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Date Range</label>
+                <button
+                  type="button"
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <span className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-gray-400" />
+                    {dateRange.start || dateRange.end ? (
+                      <span className="text-gray-900">
+                        {dateRange.start ? formatDate(dateRange.start) : 'Start'} 
+                        {' - '} 
+                        {dateRange.end ? formatDate(dateRange.end) : 'End'}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500">Select date range</span>
+                    )}
+                  </span>
+                  <X 
+                    className={`h-4 w-4 text-gray-400 transition-transform ${showDatePicker ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {showDatePicker && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full left-0 right-0 mt-2 p-4 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
+                    >
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-600">
+                            Start Date
+                          </label>
+                          <input
+                            type="date"
+                            value={dateRange.start}
+                            onChange={(e) => onDateRangeChange({ ...dateRange, start: e.target.value })}
+                            max={dateRange.end}
+                            className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-600">
+                            End Date
+                          </label>
+                          <input
+                            type="date"
+                            value={dateRange.end}
+                            onChange={(e) => onDateRangeChange({ ...dateRange, end: e.target.value })}
+                            min={dateRange.start}
+                            className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end mt-4 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            onDateRangeChange({ start: '', end: '' });
+                            setShowDatePicker(false);
+                          }}
+                        >
+                          Clear
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => setShowDatePicker(false)}
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Start Date</label>
-              <input
-                type="date"
-                value={dateRange.start}
-                onChange={(e) => onDateRangeChange({ ...dateRange, start: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">End Date</label>
-              <input
-                type="date"
-                value={dateRange.end}
-                onChange={(e) => onDateRangeChange({ ...dateRange, end: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
