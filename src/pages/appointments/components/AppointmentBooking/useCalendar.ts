@@ -9,17 +9,63 @@ export function useCalendar() {
     return today;
   });
   
-  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
-  });
-
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [disabledDays, setDisabledDays] = useState<string[]>([]);
 
   useEffect(() => {
     fetchDisabledDays();
   }, [currentDate]);
+
+  // Initial setup to check if today is available
+  useEffect(() => {
+    const initializeDate = async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const todayStr = toUTCDateString(today);
+      
+      try {
+        const { data: disabledSlots, error } = await supabase
+          .from('time_slot_settings')
+          .select('date')
+          .is('time', null)
+          .eq('is_disabled', true)
+          .eq('date', todayStr);
+
+        if (error) throw error;
+
+        // If today is not disabled, set it as the selected date
+        if (!disabledSlots || disabledSlots.length === 0) {
+          setSelectedDate(today);
+        } else {
+          // Find the next available date within the next 3 days
+          for (let i = 1; i <= 3; i++) {
+            const nextDate = new Date(today);
+            nextDate.setDate(today.getDate() + i);
+            const nextDateStr = toUTCDateString(nextDate);
+            
+            const { data: nextDisabledSlots, error: nextError } = await supabase
+              .from('time_slot_settings')
+              .select('date')
+              .is('time', null)
+              .eq('is_disabled', true)
+              .eq('date', nextDateStr);
+
+            if (nextError) throw nextError;
+
+            if (!nextDisabledSlots || nextDisabledSlots.length === 0) {
+              setSelectedDate(nextDate);
+              break;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking initial date:', error);
+      }
+    };
+
+    initializeDate();
+  }, []);
 
   const fetchDisabledDays = async () => {
     try {
