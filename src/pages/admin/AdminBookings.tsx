@@ -41,10 +41,18 @@ export default function AdminBookings() {
     // Apply filters
     filters.forEach(filter => {
       if (filter.value) {
-        const filterLower = filter.value.toLowerCase();
-        filteredData = filteredData.filter(booking =>
-          String(booking[filter.field as keyof Booking]).toLowerCase().includes(filterLower)
-        );
+        if (filter.field === 'gender') {
+          // Exact match for gender
+          filteredData = filteredData.filter(booking =>
+            booking[filter.field as keyof Booking].toLowerCase() === filter.value.toLowerCase()
+          );
+        } else {
+          // Contains match for other fields
+          const filterLower = filter.value.toLowerCase();
+          filteredData = filteredData.filter(booking =>
+            String(booking[filter.field as keyof Booking]).toLowerCase().includes(filterLower)
+          );
+        }
       }
     });
 
