@@ -98,6 +98,9 @@ export function TimeSlotDistribution({ timeSlotDistribution }: TimeSlotDistribut
         cornerRadius: 8,
         displayColors: true,
         usePointStyle: true,
+        enabled: true,
+        intersect: false,
+        mode: 'index',
       },
     },
     scales: {
@@ -135,6 +138,10 @@ export function TimeSlotDistribution({ timeSlotDistribution }: TimeSlotDistribut
       easing: 'easeOutQuart',
     },
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
   };
 
   return (
@@ -142,7 +149,8 @@ export function TimeSlotDistribution({ timeSlotDistribution }: TimeSlotDistribut
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
-      <h3 className="text-lg font-medium text-gray-800 mb-4">Popular Time Slots</h3>
+      <h3 className="text-lg font-medium text-gray-800 mb-1">Popular Time Slots</h3>
+      <p className="text-sm text-gray-500 mb-4">All-time booking distribution</p>
       <div className="h-64">
         {timeSlotDistribution.length > 0 ? (
           <Bar 

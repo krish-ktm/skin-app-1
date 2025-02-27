@@ -137,7 +137,10 @@ export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
             const percentage = data[context.dataIndex].percentage.toFixed(1);
             return `${value} appointments (${percentage}%)`;
           }
-        }
+        },
+        enabled: true,
+        intersect: false,
+        mode: 'index',
       }
     },
     scales: {
@@ -149,6 +152,10 @@ export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
       }
     },
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
   };
 
   if (isLoading) {
@@ -170,7 +177,8 @@ export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
-      <h3 className="text-lg font-medium text-gray-800 mb-4">Appointment Distribution by Day</h3>
+      <h3 className="text-lg font-medium text-gray-800 mb-1">Appointment Distribution by Day</h3>
+      <p className="text-sm text-gray-500 mb-4">All-time booking patterns</p>
       
       <div className="h-64 mb-6">
         <Bar data={chartData} options={chartOptions} />

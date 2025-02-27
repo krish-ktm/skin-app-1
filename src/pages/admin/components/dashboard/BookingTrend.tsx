@@ -63,6 +63,9 @@ export function BookingTrend({ bookingTrend }: BookingTrendProps) {
         padding: 12,
         cornerRadius: 8,
         displayColors: false,
+        enabled: true,
+        intersect: false,
+        mode: 'index',
       },
     },
     scales: {
@@ -96,6 +99,10 @@ export function BookingTrend({ bookingTrend }: BookingTrendProps) {
       duration: 2000,
     },
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
   };
 
   return (
@@ -103,7 +110,8 @@ export function BookingTrend({ bookingTrend }: BookingTrendProps) {
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
-      <h3 className="text-lg font-medium text-gray-800 mb-4">Booking Trend (Last 7 Days)</h3>
+      <h3 className="text-lg font-medium text-gray-800 mb-1">Booking Trend</h3>
+      <p className="text-sm text-gray-500 mb-4">Last 7 Days</p>
       <div className="h-64">
         <Line 
           data={bookingTrendData} 

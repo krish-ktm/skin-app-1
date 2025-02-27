@@ -65,6 +65,7 @@ export function GenderDistribution({ genderDistribution }: GenderDistributionPro
         cornerRadius: 8,
         displayColors: true,
         usePointStyle: true,
+        enabled: true,
         callbacks: {
           label: function(context: any) {
             const label = context.label || '';
@@ -90,14 +91,14 @@ export function GenderDistribution({ genderDistribution }: GenderDistributionPro
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
-      <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center">
+      <h3 className="text-lg font-medium text-gray-800 mb-1 flex items-center">
         <span className="mr-2">Gender Distribution</span>
-        {genderDistribution.male + genderDistribution.female > 0 && (
-          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-            {genderDistribution.male + genderDistribution.female} total
-          </span>
-        )}
       </h3>
+      <p className="text-sm text-gray-500 mb-3">
+        {genderDistribution.male + genderDistribution.female > 0 ? 
+          `Total: ${genderDistribution.male + genderDistribution.female} patients` : 
+          'No data available'}
+      </p>
       <div className="h-64 flex items-center justify-center">
         {genderDistribution.male + genderDistribution.female > 0 ? (
           <Doughnut 

@@ -130,6 +130,9 @@ export function PerformanceMetrics() {
         cornerRadius: 8,
         displayColors: true,
         usePointStyle: true,
+        enabled: true,
+        intersect: false,
+        mode: 'index',
       },
     },
     scales: {
@@ -154,6 +157,10 @@ export function PerformanceMetrics() {
       },
     },
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
   };
 
   if (isLoading) {
@@ -181,7 +188,8 @@ export function PerformanceMetrics() {
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
-      <h3 className="text-lg font-medium text-gray-800 mb-4">Performance Metrics (Last 14 Days)</h3>
+      <h3 className="text-lg font-medium text-gray-800 mb-1">Performance Metrics</h3>
+      <p className="text-sm text-gray-500 mb-4">Last 14 Days</p>
       
       <div className="h-64 mb-6">
         <Line data={chartData} options={chartOptions} />
