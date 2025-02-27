@@ -14,7 +14,6 @@ import { SystemStatus } from './components/dashboard/SystemStatus';
 import { DashboardLoader } from './components/dashboard/DashboardLoader';
 import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
 import { RealTimeAnalytics } from './components/dashboard/RealTimeAnalytics';
-import { PerformanceMetrics } from './components/dashboard/PerformanceMetrics';
 
 // Register ChartJS components
 ChartJS.register(
@@ -246,9 +245,6 @@ export default function AdminDashboard() {
         {/* Day of Week Analytics */}
         <DayOfWeekAnalytics />
       </div>
-
-      {/* Performance Metrics */}
-      <PerformanceMetrics />
 
       {/* Recent Bookings */}
       <RecentBookings recentBookings={recentBookings} />

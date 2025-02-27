@@ -87,8 +87,8 @@ export function RealTimeAnalytics() {
       // Calculate booking rate (bookings per hour)
       const bookingRate = recentHourBookings?.length || 0;
       
-      // Simulate active users (in a real app, this would come from analytics)
-      const activeUsers = Math.floor(Math.random() * 5) + 1;
+      // Count active users (this would be 0 since we don't have real tracking)
+      const activeUsers = 0;
       
       setData({
         activeUsers,
@@ -145,16 +145,6 @@ export function RealTimeAnalytics() {
       </div>
       
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-blue-50 p-3 rounded-lg flex items-center">
-          <div className="bg-blue-100 p-2 rounded-full mr-3">
-            <Users className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Active Users</p>
-            <p className="text-xl font-bold text-blue-600">{data.activeUsers}</p>
-          </div>
-        </div>
-        
         <div className="bg-purple-50 p-3 rounded-lg flex items-center">
           <div className="bg-purple-100 p-2 rounded-full mr-3">
             <TrendingUp className="h-5 w-5 text-purple-600" />
@@ -175,7 +165,7 @@ export function RealTimeAnalytics() {
           </div>
         </div>
         
-        <div className="bg-amber-50 p-3 rounded-lg flex items-center">
+        <div className="bg-amber-50 p-3 rounded-lg flex items-center col-span-2">
           <div className="bg-amber-100 p-2 rounded-full mr-3">
             <Clock className="h-5 w-5 text-amber-600" />
           </div>
