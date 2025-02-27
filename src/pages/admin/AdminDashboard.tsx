@@ -12,12 +12,9 @@ import { TimeSlotDistribution } from './components/dashboard/TimeSlotDistributio
 import { RecentBookings } from './components/dashboard/RecentBookings';
 import { SystemStatus } from './components/dashboard/SystemStatus';
 import { DashboardLoader } from './components/dashboard/DashboardLoader';
-import { RealTimeAnalytics } from './components/dashboard/RealTimeAnalytics';
 import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
+import { RealTimeAnalytics } from './components/dashboard/RealTimeAnalytics';
 import { PerformanceMetrics } from './components/dashboard/PerformanceMetrics';
-import { AdvancedAnalytics } from './components/dashboard/AdvancedAnalytics';
-import { PredictiveAnalytics } from './components/dashboard/PredictiveAnalytics';
-import { PatientDemographics } from './components/dashboard/PatientDemographics';
 
 // Register ChartJS components
 ChartJS.register(
@@ -47,7 +44,6 @@ export default function AdminDashboard() {
   const [bookingTrend, setBookingTrend] = useState<{date: string, count: number}[]>([]);
   const [timeSlotDistribution, setTimeSlotDistribution] = useState<{time: string, count: number}[]>([]);
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
-  const [viewMode, setViewMode] = useState<'basic' | 'advanced' | 'analytics'>('basic');
 
   useEffect(() => {
     fetchStats();
@@ -228,47 +224,13 @@ export default function AdminDashboard() {
     >
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
-        <div className="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setViewMode('basic')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              viewMode === 'basic' 
-                ? 'bg-white text-blue-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Basic
-          </button>
-          <button
-            onClick={() => setViewMode('advanced')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              viewMode === 'advanced' 
-                ? 'bg-white text-blue-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Advanced
-          </button>
-          <button
-            onClick={() => setViewMode('analytics')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              viewMode === 'analytics' 
-                ? 'bg-white text-blue-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Analytics
-          </button>
-        </div>
       </div>
       
       {/* Stats Cards */}
       <StatsCards stats={stats} />
 
-      {/* Real-time Analytics (Advanced View) */}
-      {viewMode === 'advanced' && (
-        <RealTimeAnalytics />
-      )}
+      {/* Real-time Analytics */}
+      <RealTimeAnalytics />
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -285,30 +247,11 @@ export default function AdminDashboard() {
         <DayOfWeekAnalytics />
       </div>
 
+      {/* Performance Metrics */}
+      <PerformanceMetrics />
+
       {/* Recent Bookings */}
       <RecentBookings recentBookings={recentBookings} />
-
-      {/* Advanced Analytics Section */}
-      {viewMode === 'advanced' && (
-        <>
-          <h3 className="text-xl font-semibold text-gray-800 mt-8 mb-4">Advanced Analytics</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-            <PerformanceMetrics />
-          </div>
-        </>
-      )}
-
-      {/* Data Analytics Section */}
-      {viewMode === 'analytics' && (
-        <>
-          <h3 className="text-xl font-semibold text-gray-800 mt-8 mb-4">Data Analytics</h3>
-          <div className="grid grid-cols-1 gap-6">
-            <AdvancedAnalytics />
-            <PatientDemographics />
-            <PredictiveAnalytics />
-          </div>
-        </>
-      )}
 
       {/* System Status */}
       <SystemStatus />
