@@ -20,6 +20,16 @@ export function useAppointmentForm() {
     }
   };
 
+  const resetFormData = () => {
+    setFormData({
+      name: '',
+      phone: '',
+      caseId: '',
+      gender: 'male',
+    });
+    setSearchError(null);
+  };
+
   const handleCaseSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.caseId) return;
@@ -55,5 +65,6 @@ export function useAppointmentForm() {
     searchError,
     handleInputChange,
     handleCaseSearch,
+    resetFormData
   };
 }

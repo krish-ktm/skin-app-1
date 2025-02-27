@@ -12,16 +12,23 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const appointmentService = {
   async getAppointmentsByCaseId(caseId: string) {
-    const { data, error } = await supabase
+    // First check if any appointments exist with this case ID
+    const { data, error, count } = await supabase
       .from('appointments')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('case_id', caseId.toUpperCase())
       .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
     if (error) throw error;
-    return data;
+    
+    // If no appointments found, throw an error
+    if (!data || data.length === 0) {
+      throw new Error('No appointment found with this Case ID');
+    }
+    
+    // Return the most recent appointment
+    return data[0];
   },
 
   async getAppointmentsByDate(date: string) {

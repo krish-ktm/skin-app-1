@@ -36,7 +36,8 @@ export default function AppointmentBooking() {
     isSearchingCase,
     searchError,
     handleInputChange,
-    handleCaseSearch
+    handleCaseSearch,
+    resetFormData
   } = useAppointmentForm();
 
   const {
@@ -130,6 +131,12 @@ export default function AppointmentBooking() {
   useEffect(() => {
     setSelectedTime('');
   }, [selectedDate, availableSlots]);
+
+  // Handle patient type selection with form data reset
+  const handlePatientTypeSelection = (isReturning: boolean | null) => {
+    resetFormData();
+    setIsReturningPatient(isReturning);
+  };
 
   return (
     <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-xl">
@@ -248,7 +255,7 @@ export default function AppointmentBooking() {
             <AnimatePresence mode="wait">
               {isReturningPatient === null ? (
                 <PatientTypeSelection
-                  onSelect={setIsReturningPatient}
+                  onSelect={handlePatientTypeSelection}
                 />
               ) : isReturningPatient ? (
                 <ReturningPatientForm
@@ -257,7 +264,7 @@ export default function AppointmentBooking() {
                   onCaseSearch={handleCaseSearch}
                   isSearchingCase={isSearchingCase}
                   searchError={searchError}
-                  onBack={() => setIsReturningPatient(null)}
+                  onBack={() => handlePatientTypeSelection(null)}
                   onSubmit={handleSubmit}
                   isLoading={isLoading}
                   errorMessage={bookingStatus.message}
@@ -268,7 +275,7 @@ export default function AppointmentBooking() {
                 <NewPatientForm
                   formData={formData}
                   onInputChange={handleInputChange}
-                  onBack={() => setIsReturningPatient(null)}
+                  onBack={() => handlePatientTypeSelection(null)}
                   onSubmit={handleSubmit}
                   isLoading={isLoading}
                   errorMessage={bookingStatus.message}
