@@ -15,6 +15,9 @@ import { DashboardLoader } from './components/dashboard/DashboardLoader';
 import { RealTimeAnalytics } from './components/dashboard/RealTimeAnalytics';
 import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
 import { PerformanceMetrics } from './components/dashboard/PerformanceMetrics';
+import { AdvancedAnalytics } from './components/dashboard/AdvancedAnalytics';
+import { PredictiveAnalytics } from './components/dashboard/PredictiveAnalytics';
+import { PatientDemographics } from './components/dashboard/PatientDemographics';
 
 // Register ChartJS components
 ChartJS.register(
@@ -44,7 +47,7 @@ export default function AdminDashboard() {
   const [bookingTrend, setBookingTrend] = useState<{date: string, count: number}[]>([]);
   const [timeSlotDistribution, setTimeSlotDistribution] = useState<{time: string, count: number}[]>([]);
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
-  const [viewMode, setViewMode] = useState<'basic' | 'advanced'>('basic');
+  const [viewMode, setViewMode] = useState<'basic' | 'advanced' | 'analytics'>('basic');
 
   useEffect(() => {
     fetchStats();
@@ -246,6 +249,16 @@ export default function AdminDashboard() {
           >
             Advanced
           </button>
+          <button
+            onClick={() => setViewMode('analytics')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              viewMode === 'analytics' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Analytics
+          </button>
         </div>
       </div>
       
@@ -281,6 +294,18 @@ export default function AdminDashboard() {
           <h3 className="text-xl font-semibold text-gray-800 mt-8 mb-4">Advanced Analytics</h3>
           <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
             <PerformanceMetrics />
+          </div>
+        </>
+      )}
+
+      {/* Data Analytics Section */}
+      {viewMode === 'analytics' && (
+        <>
+          <h3 className="text-xl font-semibold text-gray-800 mt-8 mb-4">Data Analytics</h3>
+          <div className="grid grid-cols-1 gap-6">
+            <AdvancedAnalytics />
+            <PatientDemographics />
+            <PredictiveAnalytics />
           </div>
         </>
       )}
