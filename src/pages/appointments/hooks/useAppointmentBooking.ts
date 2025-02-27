@@ -28,7 +28,8 @@ export function useAppointmentBooking(
 
     setIsLoading(true);
     // Only generate a new case ID if it's a new patient
-    const caseId = formData.caseId || nanoid(10).toUpperCase();
+    // Generate a shorter, catchier case ID without symbols
+    const caseId = formData.caseId || nanoid(6).toUpperCase().replace(/[^A-Z0-9]/g, '');
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
