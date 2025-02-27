@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { nanoid } from 'nanoid';
 import { supabase } from '../../../lib/supabase';
-import type { Appointment, BookingStatus, FormData } from '../../../types';
+import type { Appointment, BookingStatus, FormData, ValidationErrors } from '../../../types';
 import { toUTCDateString } from '../../../utils/date';
 
 export function useAppointmentBooking(
@@ -9,13 +9,19 @@ export function useAppointmentBooking(
   selectedDate: Date | null,
   selectedTime: string,
   onSuccess?: (appointment: Appointment) => void,
-  onError?: (message: string) => void
+  onError?: (message: string) => void,
+  validateForm?: () => boolean
 ) {
   const [bookingStatus, setBookingStatus] = useState<BookingStatus>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form if validation function is provided
+    if (validateForm && !validateForm()) {
+      return;
+    }
     
     if (!selectedDate || !selectedTime) {
       setBookingStatus({

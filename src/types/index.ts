@@ -29,3 +29,10 @@ export interface FormData {
   caseId: string;
   gender: string;
 }
+
+export interface ValidationErrors {
+  name?: string | null;
+  phone?: string | null;
+  caseId?: string | null;
+  gender?: string | null;
+}

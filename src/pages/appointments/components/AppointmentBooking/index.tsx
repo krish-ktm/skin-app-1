@@ -35,9 +35,11 @@ export default function AppointmentBooking() {
     setFormData,
     isSearchingCase,
     searchError,
+    validationErrors,
     handleInputChange,
     handleCaseSearch,
-    resetFormData
+    resetFormData,
+    validateForm
   } = useAppointmentForm();
 
   const {
@@ -66,7 +68,8 @@ export default function AppointmentBooking() {
     selectedDate,
     selectedTime,
     () => showTemporaryNotification('Appointment booked successfully!', 'success'),
-    (error) => showTemporaryNotification(error, 'error')
+    (error) => showTemporaryNotification(error, 'error'),
+    validateForm
   );
 
   // Auto sign in for demo purposes
@@ -145,7 +148,7 @@ export default function AppointmentBooking() {
       )}
       
       <AnimatePresence>
-        {showNotification && (
+        {showNotification && !bookingStatus.success && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -264,6 +267,7 @@ export default function AppointmentBooking() {
                   onCaseSearch={handleCaseSearch}
                   isSearchingCase={isSearchingCase}
                   searchError={searchError}
+                  validationErrors={validationErrors}
                   onBack={() => handlePatientTypeSelection(null)}
                   onSubmit={handleSubmit}
                   isLoading={isLoading}
@@ -275,6 +279,7 @@ export default function AppointmentBooking() {
                 <NewPatientForm
                   formData={formData}
                   onInputChange={handleInputChange}
+                  validationErrors={validationErrors}
                   onBack={() => handlePatientTypeSelection(null)}
                   onSubmit={handleSubmit}
                   isLoading={isLoading}

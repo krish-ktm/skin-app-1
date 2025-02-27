@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Search, CheckCircle2, RotateCcw } from 'lucide-react';
 import { PulseLoader } from 'react-spinners';
-import { FormData } from '../../../../types';
+import { FormData, ValidationErrors } from '../../../../types';
 import { ErrorMessage } from './ErrorMessage';
 import { SubmitButton } from './SubmitButton';
 import { GenderSelect } from '../../../../components/ui/GenderSelect';
@@ -13,6 +13,7 @@ interface ReturningPatientFormProps {
   onCaseSearch: (e: React.FormEvent) => void;
   isSearchingCase: boolean;
   searchError: string | null;
+  validationErrors: ValidationErrors;
   onBack: () => void;
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
@@ -27,6 +28,7 @@ export function ReturningPatientForm({
   onCaseSearch,
   isSearchingCase,
   searchError,
+  validationErrors,
   onBack,
   onSubmit,
   isLoading,
@@ -102,8 +104,13 @@ export function ReturningPatientForm({
                   value={formData.caseId}
                   onChange={onInputChange}
                   placeholder="Enter your Case ID"
-                  className={`w-full px-6 py-4 text-base sm:text-lg border-2 ${searchError ? 'border-red-200' : 'border-blue-200'} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md`}
+                  className={`w-full px-6 py-4 text-base sm:text-lg border-2 ${
+                    searchError || validationErrors.caseId ? 'border-red-200' : 'border-blue-200'
+                  } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md`}
                 />
+                {validationErrors.caseId && (
+                  <p className="text-sm text-red-600 mt-1">{validationErrors.caseId}</p>
+                )}
               </div>
               <button
                 type="button"

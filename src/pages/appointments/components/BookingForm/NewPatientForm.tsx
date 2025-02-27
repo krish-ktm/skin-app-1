@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, User, Phone } from 'lucide-react';
-import { FormData } from '../../../../types';
+import { FormData, ValidationErrors } from '../../../../types';
 import { ErrorMessage } from './ErrorMessage';
 import { SubmitButton } from './SubmitButton';
 import { GenderSelect } from '../../../../components/ui/GenderSelect';
@@ -9,6 +9,7 @@ import { GenderSelect } from '../../../../components/ui/GenderSelect';
 interface NewPatientFormProps {
   formData: FormData;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  validationErrors: ValidationErrors;
   onBack: () => void;
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
@@ -20,6 +21,7 @@ interface NewPatientFormProps {
 export function NewPatientForm({
   formData,
   onInputChange,
+  validationErrors,
   onBack,
   onSubmit,
   isLoading,
@@ -69,12 +71,17 @@ export function NewPatientForm({
                 name="name"
                 value={formData.name}
                 onChange={onInputChange}
-                className="w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md"
+                className={`w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 ${
+                  validationErrors.name ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-xl bg-white transition-shadow hover:shadow-md`}
                 required
                 disabled={isLoading}
               />
               <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
             </div>
+            {validationErrors.name && (
+              <p className="text-sm text-red-600 mt-1">{validationErrors.name}</p>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -85,12 +92,17 @@ export function NewPatientForm({
                 name="phone"
                 value={formData.phone}
                 onChange={onInputChange}
-                className="w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-shadow hover:shadow-md"
+                className={`w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 ${
+                  validationErrors.phone ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-xl bg-white transition-shadow hover:shadow-md`}
                 required
                 disabled={isLoading}
               />
               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
             </div>
+            {validationErrors.phone && (
+              <p className="text-sm text-red-600 mt-1">{validationErrors.phone}</p>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -100,6 +112,9 @@ export function NewPatientForm({
               onChange={handleGenderChange}
               disabled={isLoading}
             />
+            {validationErrors.gender && (
+              <p className="text-sm text-red-600 mt-1">{validationErrors.gender}</p>
+            )}
           </div>
         </motion.div>
       </div>
