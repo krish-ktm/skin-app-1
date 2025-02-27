@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { PulseLoader } from 'react-spinners';
 import { Calendar, Clock, Users, TrendingUp, Activity, AlertTriangle } from 'lucide-react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, BarElement } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, BarElement, Filler } from 'chart.js';
 import { Doughnut, Line, Bar } from 'react-chartjs-2';
 import { format, subDays, parseISO } from 'date-fns';
+import { motion } from 'framer-motion';
 
 // Register ChartJS components
 ChartJS.register(
@@ -16,7 +17,8 @@ ChartJS.register(
   PointElement, 
   LineElement, 
   Title,
-  BarElement
+  BarElement,
+  Filler
 );
 
 export default function AdminDashboard() {
@@ -206,17 +208,69 @@ export default function AdminDashboard() {
     );
   }
 
-  // Chart data
+  // Enhanced Chart data and options
   const genderChartData = {
     labels: ['Male', 'Female'],
     datasets: [
       {
         data: [genderDistribution.male, genderDistribution.female],
-        backgroundColor: ['#3B82F6', '#EC4899'],
+        backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(236, 72, 153, 0.8)'],
         borderColor: ['#2563EB', '#DB2777'],
-        borderWidth: 1,
+        borderWidth: 2,
+        hoverBackgroundColor: ['rgba(59, 130, 246, 1)', 'rgba(236, 72, 153, 1)'],
+        hoverBorderColor: ['#1D4ED8', '#BE185D'],
+        hoverBorderWidth: 3,
       },
     ],
+  };
+
+  const genderChartOptions = {
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif",
+          },
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle',
+        },
+      },
+      tooltip: {
+        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+        titleFont: {
+          size: 14,
+          family: "'Inter', sans-serif",
+          weight: 'bold',
+        },
+        bodyFont: {
+          size: 13,
+          family: "'Inter', sans-serif",
+        },
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: true,
+        usePointStyle: true,
+        callbacks: {
+          label: function(context: any) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = genderDistribution.male + genderDistribution.female;
+            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      },
+    },
+    cutout: '65%',
+    animation: {
+      animateScale: true,
+      animateRotate: true,
+      duration: 2000,
+    },
+    maintainAspectRatio: false,
   };
 
   const bookingTrendData = {
@@ -225,12 +279,74 @@ export default function AdminDashboard() {
       {
         label: 'Bookings',
         data: bookingTrend.map(item => item.count),
-        borderColor: '#3B82F6',
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: 'rgba(59, 130, 246, 1)',
+        pointRadius: 5,
+        pointHoverRadius: 7,
         tension: 0.4,
         fill: true,
+        borderWidth: 3,
       },
     ],
+  };
+
+  const bookingTrendOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+        titleFont: {
+          size: 14,
+          family: "'Inter', sans-serif",
+          weight: 'bold',
+        },
+        bodyFont: {
+          size: 13,
+          family: "'Inter', sans-serif",
+        },
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+          font: {
+            family: "'Inter', sans-serif",
+          },
+          color: 'rgba(107, 114, 128, 1)',
+        },
+        grid: {
+          color: 'rgba(243, 244, 246, 1)',
+          drawBorder: false,
+        },
+      },
+      x: {
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif",
+          },
+          color: 'rgba(107, 114, 128, 1)',
+        },
+        grid: {
+          display: false,
+        },
+      },
+    },
+    animation: {
+      duration: 2000,
+    },
+    maintainAspectRatio: false,
   };
 
   const timeSlotChartData = {
@@ -239,20 +355,144 @@ export default function AdminDashboard() {
       {
         label: 'Bookings',
         data: timeSlotDistribution.map(item => item.count),
-        backgroundColor: 'rgba(59, 130, 246, 0.7)',
-        borderColor: '#3B82F6',
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(99, 102, 241, 0.8)',
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(168, 85, 247, 0.8)',
+          'rgba(217, 70, 239, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(244, 63, 94, 0.8)',
+          'rgba(251, 113, 133, 0.8)',
+          'rgba(249, 168, 212, 0.8)',
+          'rgba(248, 113, 113, 0.8)',
+        ],
+        borderColor: [
+          'rgba(59, 130, 246, 1)',
+          'rgba(99, 102, 241, 1)',
+          'rgba(139, 92, 246, 1)',
+          'rgba(168, 85, 247, 1)',
+          'rgba(217, 70, 239, 1)',
+          'rgba(236, 72, 153, 1)',
+          'rgba(244, 63, 94, 1)',
+          'rgba(251, 113, 133, 1)',
+          'rgba(249, 168, 212, 1)',
+          'rgba(248, 113, 113, 1)',
+        ],
         borderWidth: 1,
+        borderRadius: 6,
+        hoverBackgroundColor: [
+          'rgba(59, 130, 246, 1)',
+          'rgba(99, 102, 241, 1)',
+          'rgba(139, 92, 246, 1)',
+          'rgba(168, 85, 247, 1)',
+          'rgba(217, 70, 239, 1)',
+          'rgba(236, 72, 153, 1)',
+          'rgba(244, 63, 94, 1)',
+          'rgba(251, 113, 133, 1)',
+          'rgba(249, 168, 212, 1)',
+          'rgba(248, 113, 113, 1)',
+        ],
       },
     ],
   };
 
+  const timeSlotChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+        titleFont: {
+          size: 14,
+          family: "'Inter', sans-serif",
+          weight: 'bold',
+        },
+        bodyFont: {
+          size: 13,
+          family: "'Inter', sans-serif",
+        },
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: true,
+        usePointStyle: true,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+          font: {
+            family: "'Inter', sans-serif",
+          },
+          color: 'rgba(107, 114, 128, 1)',
+        },
+        grid: {
+          color: 'rgba(243, 244, 246, 1)',
+          drawBorder: false,
+        },
+      },
+      x: {
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif",
+          },
+          color: 'rgba(107, 114, 128, 1)',
+          maxRotation: 45,
+          minRotation: 45,
+        },
+        grid: {
+          display: false,
+        },
+      },
+    },
+    animation: {
+      delay: (context: any) => context.dataIndex * 100,
+      duration: 1000,
+      easing: 'easeOutQuart',
+    },
+    maintainAspectRatio: false,
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.5,
+      }
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
       <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <motion.div 
+          className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+          variants={cardVariants}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-medium text-gray-600">Total Bookings</h3>
@@ -265,9 +505,12 @@ export default function AdminDashboard() {
           <div className="mt-4 text-sm text-gray-500">
             <span className="text-green-500 font-medium">{stats.todayBookings} today</span> · {stats.upcomingBookings} upcoming
           </div>
-        </div>
+        </motion.div>
         
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <motion.div 
+          className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+          variants={cardVariants}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-medium text-gray-600">Time Slots</h3>
@@ -280,9 +523,12 @@ export default function AdminDashboard() {
           <div className="mt-4 text-sm text-gray-500">
             <span className="text-red-500 font-medium">{stats.disabledTimeSlots} disabled</span> · {stats.totalTimeSlots - stats.disabledTimeSlots} available
           </div>
-        </div>
+        </motion.div>
         
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <motion.div 
+          className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+          variants={cardVariants}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-medium text-gray-600">Unique Users</h3>
@@ -297,89 +543,128 @@ export default function AdminDashboard() {
               {((stats.totalUsers / Math.max(stats.totalBookings, 1)) * 100).toFixed(1)}% booking rate
             </span>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gender Distribution */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-medium text-gray-800 mb-4">Gender Distribution</h3>
+        <motion.div 
+          className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+          variants={cardVariants}
+        >
+          <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center">
+            <span className="mr-2">Gender Distribution</span>
+            {genderDistribution.male + genderDistribution.female > 0 && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                {genderDistribution.male + genderDistribution.female} total
+              </span>
+            )}
+          </h3>
           <div className="h-64 flex items-center justify-center">
-            <Doughnut 
-              data={genderChartData} 
-              options={{
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                  },
-                },
-                maintainAspectRatio: false,
-              }}
-            />
+            {genderDistribution.male + genderDistribution.female > 0 ? (
+              <Doughnut 
+                data={genderChartData} 
+                options={genderChartOptions}
+              />
+            ) : (
+              <div className="text-center text-gray-500">
+                <p>No data available</p>
+              </div>
+            )}
           </div>
-        </div>
+          {genderDistribution.male + genderDistribution.female > 0 && (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="bg-blue-50 p-3 rounded-lg text-center">
+                <p className="text-sm text-gray-600">Male</p>
+                <p className="text-xl font-bold text-blue-600">{genderDistribution.male}</p>
+                <p className="text-xs text-gray-500">
+                  {((genderDistribution.male / (genderDistribution.male + genderDistribution.female)) * 100).toFixed(1)}%
+                </p>
+              </div>
+              <div className="bg-pink-50 p-3 rounded-lg text-center">
+                <p className="text-sm text-gray-600">Female</p>
+                <p className="text-xl font-bold text-pink-600">{genderDistribution.female}</p>
+                <p className="text-xs text-gray-500">
+                  {((genderDistribution.female / (genderDistribution.male + genderDistribution.female)) * 100).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          )}
+        </motion.div>
 
         {/* Booking Trend */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <motion.div 
+          className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+          variants={cardVariants}
+        >
           <h3 className="text-lg font-medium text-gray-800 mb-4">Booking Trend (Last 7 Days)</h3>
           <div className="h-64">
             <Line 
               data={bookingTrendData} 
-              options={{
-                plugins: {
-                  legend: {
-                    display: false,
-                  },
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    ticks: {
-                      precision: 0,
-                    },
-                  },
-                },
-                maintainAspectRatio: false,
-              }}
+              options={bookingTrendOptions}
             />
           </div>
-        </div>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="bg-blue-50 p-3 rounded-lg text-center">
+              <p className="text-sm text-gray-600">Total in Period</p>
+              <p className="text-xl font-bold text-blue-600">
+                {bookingTrend.reduce((sum, item) => sum + item.count, 0)}
+              </p>
+            </div>
+            <div className="bg-green-50 p-3 rounded-lg text-center">
+              <p className="text-sm text-gray-600">Daily Average</p>
+              <p className="text-xl font-bold text-green-600">
+                {(bookingTrend.reduce((sum, item) => sum + item.count, 0) / bookingTrend.length).toFixed(1)}
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Popular Time Slots */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <motion.div 
+          className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+          variants={cardVariants}
+        >
           <h3 className="text-lg font-medium text-gray-800 mb-4">Popular Time Slots</h3>
           <div className="h-64">
-            <Bar 
-              data={timeSlotChartData} 
-              options={{
-                plugins: {
-                  legend: {
-                    display: false,
-                  },
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    ticks: {
-                      precision: 0,
-                    },
-                  },
-                },
-                maintainAspectRatio: false,
-              }}
-            />
+            {timeSlotDistribution.length > 0 ? (
+              <Bar 
+                data={timeSlotChartData} 
+                options={timeSlotChartOptions}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <p>No time slot data available</p>
+              </div>
+            )}
           </div>
-        </div>
+          {timeSlotDistribution.length > 0 && (
+            <div className="mt-4">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600 text-center">Most Popular Time</p>
+                <p className="text-xl font-bold text-center text-indigo-600">
+                  {formatTimeSlot(timeSlotDistribution.sort((a, b) => b.count - a.count)[0].time)}
+                </p>
+                <p className="text-xs text-gray-500 text-center">
+                  with {timeSlotDistribution.sort((a, b) => b.count - a.count)[0].count} bookings
+                </p>
+              </div>
+            </div>
+          )}
+        </motion.div>
 
         {/* Recent Bookings */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <motion.div 
+          className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+          variants={cardVariants}
+        >
           <h3 className="text-lg font-medium text-gray-800 mb-4">Recent Bookings</h3>
           {recentBookings.length > 0 ? (
             <div className="overflow-hidden">
               <ul className="divide-y divide-gray-200">
                 {recentBookings.map((booking) => (
-                  <li key={booking.id} className="py-3">
+                  <li key={booking.id} className="py-3 hover:bg-gray-50 rounded-lg px-2 transition-colors duration-150">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-gray-800">{booking.name}</p>
@@ -403,14 +688,17 @@ export default function AdminDashboard() {
               <p>No recent bookings</p>
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* System Status */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <motion.div 
+        className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+        variants={cardVariants}
+      >
         <h3 className="text-lg font-medium text-gray-800 mb-4">System Status</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center p-4 bg-green-50 rounded-lg">
+          <div className="flex items-center p-4 bg-green-50 rounded-lg border border-green-100 hover:shadow-md transition-shadow duration-300">
             <div className="mr-4 bg-green-100 p-2 rounded-full">
               <Activity className="h-5 w-5 text-green-600" />
             </div>
@@ -420,7 +708,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <div className="flex items-center p-4 bg-blue-50 rounded-lg">
+          <div className="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow duration-300">
             <div className="mr-4 bg-blue-100 p-2 rounded-full">
               <TrendingUp className="h-5 w-5 text-blue-600" />
             </div>
@@ -430,7 +718,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <div className="flex items-center p-4 bg-yellow-50 rounded-lg">
+          <div className="flex items-center p-4 bg-yellow-50 rounded-lg border border-yellow-100 hover:shadow-md transition-shadow duration-300">
             <div className="mr-4 bg-yellow-100 p-2 rounded-full">
               <AlertTriangle className="h-5 w-5 text-yellow-600" />
             </div>
@@ -440,7 +728,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
