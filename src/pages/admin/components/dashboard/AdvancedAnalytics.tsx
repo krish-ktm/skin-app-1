@@ -4,7 +4,7 @@ import { Line, Bar } from 'react-chartjs-2';
 import { supabase } from '../../../../lib/supabase';
 import { PulseLoader } from 'react-spinners';
 import { format, subMonths, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns';
-import { TrendingUp, Calendar, BarChart4, Activity } from 'lucide-react';
+import { TrendingUp, Calendar, BarChart4, Activity, Clock } from 'lucide-react';
 
 interface AnalyticsData {
   monthlyTrends: {
