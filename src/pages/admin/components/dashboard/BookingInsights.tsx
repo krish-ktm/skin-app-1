@@ -29,9 +29,6 @@ export function BookingInsights({}: BookingInsightsProps) {
   const fetchInsightData = async () => {
     setIsLoading(true);
     try {
-      // In a real application, this would fetch actual data
-      // For this demo, we'll simulate the data
-      
       // Get total appointments
       const { count: totalCount, error: totalError } = await supabase
         .from('appointments')
@@ -40,22 +37,42 @@ export function BookingInsights({}: BookingInsightsProps) {
       if (totalError) throw totalError;
       
       // Get unique case IDs to determine repeat vs new bookings
-      const { data: uniqueCaseIds, error: uniqueError } = await supabase
+      const { data: appointments, error: appointmentsError } = await supabase
         .from('appointments')
         .select('case_id');
       
-      if (uniqueError) throw uniqueError;
+      if (appointmentsError) throw appointmentsError;
       
       // Count unique case IDs
-      const uniqueIds = new Set(uniqueCaseIds?.map(booking => booking.case_id));
-      const uniqueCount = uniqueIds.size;
+      const caseIdCounts: Record<string, number> = {};
+      appointments?.forEach(booking => {
+        caseIdCounts[booking.case_id] = (caseIdCounts[booking.case_id] || 0) + 1;
+      });
       
-      // Calculate repeat bookings (total - unique)
-      const repeatCount = (totalCount || 0) - uniqueCount;
+      // Count repeat bookings (case IDs with more than 1 booking)
+      const repeatCaseIds = Object.entries(caseIdCounts).filter(([_, count]) => count > 1);
+      const repeatCount = repeatCaseIds.length;
       
-      // For demo purposes, simulate completion and cancellation rates
-      const completionRate = 0.95; // 95% completion rate
-      const cancellationRate = 0.05; // 5% cancellation rate
+      // Count unique case IDs (new patients)
+      const uniqueCount = Object.keys(caseIdCounts).length - repeatCount;
+      
+      // For completion rate, we'll use actual data if available
+      // For this example, we'll calculate based on appointments in the past vs future
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Get past appointments (completed)
+      const { count: pastCount, error: pastError } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .lt('appointment_date', today);
+      
+      if (pastError) throw pastError;
+      
+      // Calculate completion rate (assuming 95% of past appointments were completed)
+      // In a real app, you would have a status field to track this
+      const completedCount = pastCount || 0;
+      const completionRate = totalCount ? completedCount / totalCount : 0;
+      const cancellationRate = 1 - completionRate;
       
       setData({
         completionRate,
@@ -82,12 +99,12 @@ export function BookingInsights({}: BookingInsightsProps) {
   };
 
   const completionChartData = {
-    labels: ['Completed', 'Cancelled'],
+    labels: ['Completed', 'Upcoming'],
     datasets: [
       {
         data: [data.completionRate * 100, data.cancellationRate * 100],
-        backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(239, 68, 68, 0.8)'],
-        borderColor: ['#16a34a', '#dc2626'],
+        backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(59, 130, 246, 0.8)'],
+        borderColor: ['#16a34a', '#2563eb'],
         borderWidth: 1,
       },
     ],
@@ -145,7 +162,7 @@ export function BookingInsights({}: BookingInsightsProps) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700 text-center">Appointment Completion Rate</h4>
+          <h4 className="text-sm font-medium text-gray-700 text-center">Appointment Status</h4>
           <div className="h-48 relative">
             <Doughnut data={completionChartData} options={chartOptions} />
             <div className="absolute inset-0 flex items-center justify-center">
@@ -153,7 +170,7 @@ export function BookingInsights({}: BookingInsightsProps) {
                 <span className="block text-2xl font-bold text-green-600">
                   {Math.round(data.completionRate * 100)}%
                 </span>
-                <span className="text-xs text-gray-500">Completion</span>
+                <span className="text-xs text-gray-500">Completed</span>
               </div>
             </div>
           </div>

@@ -13,7 +13,7 @@ import { RecentBookings } from './components/dashboard/RecentBookings';
 import { SystemStatus } from './components/dashboard/SystemStatus';
 import { DashboardLoader } from './components/dashboard/DashboardLoader';
 import { RealTimeAnalytics } from './components/dashboard/RealTimeAnalytics';
-import { BookingInsights } from './components/dashboard/BookingInsights';
+import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
 import { PerformanceMetrics } from './components/dashboard/PerformanceMetrics';
 
 // Register ChartJS components
@@ -268,16 +268,18 @@ export default function AdminDashboard() {
         {/* Popular Time Slots */}
         <TimeSlotDistribution timeSlotDistribution={timeSlotDistribution} />
 
-        {/* Recent Bookings */}
-        <RecentBookings recentBookings={recentBookings} />
+        {/* Day of Week Analytics */}
+        <DayOfWeekAnalytics />
       </div>
+
+      {/* Recent Bookings */}
+      <RecentBookings recentBookings={recentBookings} />
 
       {/* Advanced Analytics Section */}
       {viewMode === 'advanced' && (
         <>
           <h3 className="text-xl font-semibold text-gray-800 mt-8 mb-4">Advanced Analytics</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BookingInsights />
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
             <PerformanceMetrics />
           </div>
         </>
