@@ -5,6 +5,7 @@ import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { GenderSelect } from '../../../../components/ui/GenderSelect';
 import { TimeSlots } from '../TimeSlots';
+import { CalendarPicker } from './CalendarPicker';
 import { supabase } from '../../../../lib/supabase';
 import type { Booking } from '../../types';
 import { nanoid } from 'nanoid';
@@ -182,6 +183,13 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
     }
   };
 
+  const handleDateChange = (date: string) => {
+    setFormData(prev => ({ ...prev, appointment_date: date }));
+    if (errors.appointment_date) {
+      setErrors(prev => ({ ...prev, appointment_date: '' }));
+    }
+  };
+
   const handleGenderChange = (value: string) => {
     setFormData(prev => ({ ...prev, gender: value }));
     if (errors.gender) {
@@ -307,16 +315,16 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
                     required
                   />
                   
-                  <Input
-                    label="Date"
-                    type="date"
-                    name="appointment_date"
-                    value={formData.appointment_date || ''}
-                    onChange={handleChange}
-                    error={errors.appointment_date}
-                    icon={<Calendar className="h-5 w-5" />}
-                    required
-                  />
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Date</label>
+                    <CalendarPicker
+                      selectedDate={formData.appointment_date || ''}
+                      onDateChange={handleDateChange}
+                    />
+                    {errors.appointment_date && (
+                      <p className="text-sm text-red-600">{errors.appointment_date}</p>
+                    )}
+                  </div>
                   
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">Gender</label>
