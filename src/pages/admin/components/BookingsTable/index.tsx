@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown, Edit, Trash2, CheckCircle, XCircle, Clock, Chev
 import type { Booking, SortField } from '../../types';
 import { Button } from '../../../../components/ui/Button';
 import { formatTimeSlot } from '../../../../utils/date';
+import { PulseLoader } from 'react-spinners';
 
 interface BookingsTableProps {
   bookings: Booking[];
@@ -12,6 +13,7 @@ interface BookingsTableProps {
   onEdit: (booking: Booking) => void;
   onDelete: (booking: Booking) => void;
   onStatusChange: (booking: Booking, status: 'scheduled' | 'completed' | 'missed' | 'cancelled') => void;
+  isLoading: boolean;
 }
 
 export function BookingsTable({ 
@@ -21,7 +23,8 @@ export function BookingsTable({
   onSort, 
   onEdit, 
   onDelete,
-  onStatusChange
+  onStatusChange,
+  isLoading
 }: BookingsTableProps) {
   const [openStatusDropdown, setOpenStatusDropdown] = useState<string | null>(null);
 
@@ -149,7 +152,16 @@ export function BookingsTable({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {bookings.length === 0 ? (
+          {isLoading && bookings.length > 0 && (
+            <tr>
+              <td colSpan={9} className="px-6 py-4">
+                <div className="flex justify-center">
+                  <PulseLoader size={8} color="#3B82F6" />
+                </div>
+              </td>
+            </tr>
+          )}
+          {!isLoading && bookings.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
                 No bookings found

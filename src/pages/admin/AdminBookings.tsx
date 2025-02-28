@@ -16,12 +16,12 @@ export default function AdminBookings() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [sortField, setSortField] = useState<SortField>('appointment_date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filter[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>({ start: '', end: '' });
-  const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [currentBooking, setCurrentBooking] = useState<Booking | undefined>(undefined);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -35,85 +35,68 @@ export default function AdminBookings() {
 
   useEffect(() => {
     fetchBookings();
-  }, []);
-
-  useEffect(() => {
-    // Apply filters, sorting, and pagination on the client side
-    let filteredData = [...allBookings];
-
-    // Apply search
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filteredData = filteredData.filter(booking => 
-        booking.name.toLowerCase().includes(searchLower) ||
-        booking.case_id.toLowerCase().includes(searchLower) ||
-        booking.phone.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply filters
-    filters.forEach(filter => {
-      if (filter.value) {
-        if (filter.field === 'gender' || filter.field === 'status') {
-          // Exact match for gender and status
-          filteredData = filteredData.filter(booking =>
-            booking[filter.field as keyof Booking]?.toLowerCase() === filter.value.toLowerCase()
-          );
-        } else {
-          // Contains match for other fields
-          const filterLower = filter.value.toLowerCase();
-          filteredData = filteredData.filter(booking =>
-            String(booking[filter.field as keyof Booking]).toLowerCase().includes(filterLower)
-          );
-        }
-      }
-    });
-
-    // Apply date range
-    if (dateRange.start) {
-      filteredData = filteredData.filter(booking => 
-        booking.appointment_date >= dateRange.start
-      );
-    }
-    if (dateRange.end) {
-      filteredData = filteredData.filter(booking => 
-        booking.appointment_date <= dateRange.end
-      );
-    }
-
-    // Apply sorting
-    filteredData.sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      }
-      return aValue < bValue ? 1 : -1;
-    });
-
-    // Update total pages
-    setTotalPages(Math.ceil(filteredData.length / itemsPerPage));
-
-    // Apply pagination
-    const start = (currentPage - 1) * itemsPerPage;
-    const paginatedData = filteredData.slice(start, start + itemsPerPage);
-    setBookings(paginatedData);
-  }, [allBookings, currentPage, searchTerm, sortField, sortOrder, filters, dateRange]);
+  }, [currentPage, searchTerm, sortField, sortOrder, filters, dateRange]);
 
   async function fetchBookings() {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // Start building the query
+      let query = supabase
         .from('appointments')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+        .select('*', { count: 'exact' });
+      
+      // Apply search if provided
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,case_id.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      }
+      
+      // Apply filters
+      filters.forEach(filter => {
+        if (filter.value) {
+          if (filter.field === 'gender' || filter.field === 'status') {
+            // Exact match for gender and status
+            query = query.eq(filter.field, filter.value.toLowerCase());
+          } else {
+            // Contains match for other fields
+            query = query.ilike(filter.field, `%${filter.value}%`);
+          }
+        }
+      });
+      
+      // Apply date range
+      if (dateRange.start) {
+        query = query.gte('appointment_date', dateRange.start);
+      }
+      if (dateRange.end) {
+        query = query.lte('appointment_date', dateRange.end);
+      }
+      
+      // Get total count first
+      const { count, error: countError } = await query;
+      
+      if (countError) {
+        console.error('Count error details:', countError);
+        throw countError;
+      }
+      
+      setTotalCount(count || 0);
+      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
+      
+      // Apply sorting and pagination
+      query = query
+        .order(sortField, { ascending: sortOrder === 'asc' })
+        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
+      
+      // Execute the query
+      const { data, error } = await query;
+      
       if (error) {
         console.error('Supabase error details:', error);
         throw error;
       }
-
-      setAllBookings(data || []);
+      
+      setBookings(data || []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       showNotification('Failed to fetch bookings', 'error');
@@ -129,6 +112,7 @@ export default function AdminBookings() {
       setSortField(field);
       setSortOrder('asc');
     }
+    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   const handleFilterChange = (field: string, value: string) => {
@@ -144,7 +128,7 @@ export default function AdminBookings() {
     } else if (value) {
       setFilters([...filters, { field, value }]);
     }
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const clearFilters = () => {
@@ -184,8 +168,8 @@ export default function AdminBookings() {
         throw error;
       }
       
-      // Update local state after successful deletion
-      setAllBookings(prevBookings => prevBookings.filter(booking => booking.id !== currentBooking.id));
+      // Refresh the current page after deletion
+      await fetchBookings();
       setShowDeleteModal(false);
       showNotification('Booking deleted successfully', 'success');
     } catch (error) {
@@ -214,10 +198,8 @@ export default function AdminBookings() {
         
         console.log('Update response:', data);
         
-        // Update local state after successful update
-        setAllBookings(prevBookings => 
-          prevBookings.map(b => b.id === currentBooking.id ? { ...b, ...booking } : b)
-        );
+        // Refresh bookings after update
+        await fetchBookings();
         
         showNotification('Booking updated successfully', 'success');
       } else {
@@ -235,10 +217,8 @@ export default function AdminBookings() {
         
         console.log('Insert response:', data);
         
-        // Update local state after successful creation
-        if (data && data.length > 0) {
-          setAllBookings(prevBookings => [...prevBookings, data[0]]);
-        }
+        // Refresh bookings after creation
+        await fetchBookings();
         
         showNotification('Booking created successfully', 'success');
       }
@@ -266,12 +246,8 @@ export default function AdminBookings() {
       
       console.log('Status update response:', data);
       
-      // Update local state after successful status change
-      if (data && data.length > 0) {
-        setAllBookings(prevBookings => 
-          prevBookings.map(b => b.id === booking.id ? { ...b, status } : b)
-        );
-      }
+      // Refresh bookings after status change
+      await fetchBookings();
       
       showNotification(`Booking marked as ${status}`, 'success');
     } catch (error) {
@@ -284,14 +260,6 @@ export default function AdminBookings() {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
-
-  if (isLoading && allBookings.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <PulseLoader color="#3B82F6" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -341,21 +309,32 @@ export default function AdminBookings() {
       />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <BookingsTable
-          bookings={bookings}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-          onEdit={handleEditBooking}
-          onDelete={handleDeleteBooking}
-          onStatusChange={handleStatusChange}
-        />
+        {isLoading && bookings.length === 0 ? (
+          <div className="flex justify-center items-center h-64">
+            <PulseLoader color="#3B82F6" />
+          </div>
+        ) : (
+          <>
+            <BookingsTable
+              bookings={bookings}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              onEdit={handleEditBooking}
+              onDelete={handleDeleteBooking}
+              onStatusChange={handleStatusChange}
+              isLoading={isLoading}
+            />
 
-        <BookingsPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+            <BookingsPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalCount}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )}
       </div>
 
       <BookingModal
