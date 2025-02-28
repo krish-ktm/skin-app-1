@@ -31,7 +31,7 @@ export default function AdminBookings() {
     type: 'success' | 'error';
   } | null>(null);
   
-  const itemsPerPage = 10;
+  const itemsPerPage = 100; // Increased from 10 to 100
 
   useEffect(() => {
     fetchBookings();

@@ -3,7 +3,6 @@ import { ChevronUp, ChevronDown, Edit, Trash2, CheckCircle, XCircle, Clock, Chev
 import type { Booking, SortField } from '../../types';
 import { Button } from '../../../../components/ui/Button';
 import { formatTimeSlot } from '../../../../utils/date';
-import { PulseLoader } from 'react-spinners';
 
 interface BookingsTableProps {
   bookings: Booking[];
@@ -70,7 +69,18 @@ export function BookingsTable({
   };
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto relative">
+      {isLoading && bookings.length > 0 && (
+        <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
+          <div className="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Loading...</span>
+          </div>
+        </div>
+      )}
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -152,15 +162,6 @@ export function BookingsTable({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {isLoading && bookings.length > 0 && (
-            <tr>
-              <td colSpan={9} className="px-6 py-4">
-                <div className="flex justify-center">
-                  <PulseLoader size={8} color="#3B82F6" />
-                </div>
-              </td>
-            </tr>
-          )}
           {!isLoading && bookings.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
