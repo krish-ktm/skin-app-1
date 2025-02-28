@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, X, Calendar } from 'lucide-react';
+import { Search, Filter, X, Calendar, Plus } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import type { DateRange, Filter as FilterType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +14,7 @@ interface BookingsFiltersProps {
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
   onClearFilters: () => void;
+  onAddBooking: () => void;
 }
 
 export function BookingsFilters({
@@ -26,6 +27,7 @@ export function BookingsFilters({
   dateRange,
   onDateRangeChange,
   onClearFilters,
+  onAddBooking
 }: BookingsFiltersProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const hasActiveFilters = filters.length > 0 || dateRange.start || dateRange.end;
@@ -61,6 +63,13 @@ export function BookingsFilters({
           >
             Filters
           </Button>
+          <Button
+            onClick={onAddBooking}
+            variant="primary"
+            icon={<Plus className="h-5 w-5" />}
+          >
+            Add Booking
+          </Button>
           {hasActiveFilters && (
             <Button
               onClick={onClearFilters}
@@ -80,7 +89,7 @@ export function BookingsFilters({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4"
+            className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4 mt-4"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
@@ -93,6 +102,21 @@ export function BookingsFilters({
                   <option value="">All</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={filters.find(f => f.field === 'status')?.value || ''}
+                  onChange={(e) => onFilterChange('status', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="completed">Completed</option>
+                  <option value="missed">Missed</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
 

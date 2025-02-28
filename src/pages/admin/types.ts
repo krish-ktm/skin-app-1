@@ -7,9 +7,11 @@ export interface Booking {
   appointment_time: string;
   created_at: string;
   gender: string;
+  age?: number;
+  status?: 'scheduled' | 'completed' | 'missed' | 'cancelled';
 }
 
-export type SortField = 'case_id' | 'name' | 'phone' | 'appointment_date' | 'appointment_time';
+export type SortField = 'case_id' | 'name' | 'phone' | 'appointment_date' | 'appointment_time' | 'status';
 export type SortOrder = 'asc' | 'desc';
 
 export interface Filter {
