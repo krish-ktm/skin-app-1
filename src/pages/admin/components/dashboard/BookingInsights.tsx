@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Doughnut } from 'react-chartjs-2';
 import { supabase } from '../../../../lib/supabase';
 import { PulseLoader } from 'react-spinners';
+import { format, subMonths } from 'date-fns';
 
 interface BookingInsightsProps {}
 
@@ -11,6 +12,12 @@ interface InsightData {
   cancellationRate: number;
   repeatBookings: number;
   newBookings: number;
+  monthlyComparison: {
+    current: number;
+    previous: number;
+    percentChange: number;
+  };
+  patientRetention: number;
 }
 
 export function BookingInsights({}: BookingInsightsProps) {
@@ -18,7 +25,13 @@ export function BookingInsights({}: BookingInsightsProps) {
     completionRate: 0,
     cancellationRate: 0,
     repeatBookings: 0,
-    newBookings: 0
+    newBookings: 0,
+    monthlyComparison: {
+      current: 0,
+      previous: 0,
+      percentChange: 0
+    },
+    patientRetention: 0
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,7 +52,7 @@ export function BookingInsights({}: BookingInsightsProps) {
       // Get unique case IDs to determine repeat vs new bookings
       const { data: appointments, error: appointmentsError } = await supabase
         .from('appointments')
-        .select('case_id');
+        .select('case_id, created_at');
       
       if (appointmentsError) throw appointmentsError;
       
@@ -74,11 +87,55 @@ export function BookingInsights({}: BookingInsightsProps) {
       const completionRate = totalCount ? completedCount / totalCount : 0;
       const cancellationRate = 1 - completionRate;
       
+      // Calculate monthly comparison
+      const currentMonth = new Date();
+      const previousMonth = subMonths(currentMonth, 1);
+      
+      const currentMonthStart = format(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1), 'yyyy-MM-dd');
+      const currentMonthEnd = format(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0), 'yyyy-MM-dd');
+      
+      const previousMonthStart = format(new Date(previousMonth.getFullYear(), previousMonth.getMonth(), 1), 'yyyy-MM-dd');
+      const previousMonthEnd = format(new Date(previousMonth.getFullYear(), previousMonth.getMonth() + 1, 0), 'yyyy-MM-dd');
+      
+      // Get current month bookings
+      const { count: currentMonthCount, error: currentMonthError } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .gte('appointment_date', currentMonthStart)
+        .lte('appointment_date', currentMonthEnd);
+      
+      if (currentMonthError) throw currentMonthError;
+      
+      // Get previous month bookings
+      const { count: previousMonthCount, error: previousMonthError } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .gte('appointment_date', previousMonthStart)
+        .lte('appointment_date', previousMonthEnd);
+      
+      if (previousMonthError) throw previousMonthError;
+      
+      // Calculate percent change
+      const percentChange = previousMonthCount 
+        ? ((currentMonthCount || 0) - previousMonthCount) / previousMonthCount * 100 
+        : 0;
+      
+      // Calculate patient retention (returning patients / total patients)
+      const patientRetention = uniqueCount > 0 
+        ? (repeatCount / (repeatCount + uniqueCount)) * 100 
+        : 0;
+      
       setData({
         completionRate,
         cancellationRate,
         repeatBookings: repeatCount,
-        newBookings: uniqueCount
+        newBookings: uniqueCount,
+        monthlyComparison: {
+          current: currentMonthCount || 0,
+          previous: previousMonthCount || 0,
+          percentChange
+        },
+        patientRetention
       });
     } catch (error) {
       console.error('Error fetching insight data:', error);
@@ -192,7 +249,7 @@ export function BookingInsights({}: BookingInsightsProps) {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4 mt-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
         <div className="bg-blue-50 p-3 rounded-lg text-center">
           <p className="text-sm text-gray-600">New Patients</p>
           <p className="text-xl font-bold text-blue-600">{data.newBookings}</p>
@@ -200,6 +257,16 @@ export function BookingInsights({}: BookingInsightsProps) {
         <div className="bg-purple-50 p-3 rounded-lg text-center">
           <p className="text-sm text-gray-600">Returning Patients</p>
           <p className="text-xl font-bold text-purple-600">{data.repeatBookings}</p>
+        </div>
+        <div className="bg-green-50 p-3 rounded-lg text-center">
+          <p className="text-sm text-gray-600">Monthly Change</p>
+          <p className={`text-xl font-bold ${data.monthlyComparison.percentChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {data.monthlyComparison.percentChange >= 0 ? '+' : ''}{data.monthlyComparison.percentChange.toFixed(1)}%
+          </p>
+        </div>
+        <div className="bg-amber-50 p-3 rounded-lg text-center">
+          <p className="text-sm text-gray-600">Retention Rate</p>
+          <p className="text-xl font-bold text-amber-600">{data.patientRetention.toFixed(1)}%</p>
         </div>
       </div>
     </motion.div>

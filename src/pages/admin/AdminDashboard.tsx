@@ -14,6 +14,7 @@ import { SystemStatus } from './components/dashboard/SystemStatus';
 import { DashboardLoader } from './components/dashboard/DashboardLoader';
 import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
 import { RealTimeAnalytics } from './components/dashboard/RealTimeAnalytics';
+import { AdvancedAnalytics } from './components/dashboard/AdvancedAnalytics';
 
 // Register ChartJS components
 ChartJS.register(
@@ -230,6 +231,9 @@ export default function AdminDashboard() {
 
       {/* Real-time Analytics */}
       <RealTimeAnalytics />
+
+      {/* Advanced Analytics */}
+      <AdvancedAnalytics />
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
