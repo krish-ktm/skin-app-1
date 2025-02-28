@@ -108,7 +108,10 @@ export default function AdminBookings() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
 
       setAllBookings(data || []);
     } catch (error) {
@@ -176,9 +179,13 @@ export default function AdminBookings() {
         .delete()
         .eq('id', currentBooking.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error details:', error);
+        throw error;
+      }
       
-      await fetchBookings();
+      // Update local state after successful deletion
+      setAllBookings(prevBookings => prevBookings.filter(booking => booking.id !== currentBooking.id));
       setShowDeleteModal(false);
       showNotification('Booking deleted successfully', 'success');
     } catch (error) {
@@ -193,26 +200,50 @@ export default function AdminBookings() {
     try {
       if (currentBooking) {
         // Update existing booking
-        const { error } = await supabase
+        console.log('Updating booking:', booking);
+        const { data, error } = await supabase
           .from('appointments')
           .update(booking)
-          .eq('id', currentBooking.id);
+          .eq('id', currentBooking.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error details:', error);
+          throw error;
+        }
+        
+        console.log('Update response:', data);
+        
+        // Update local state after successful update
+        setAllBookings(prevBookings => 
+          prevBookings.map(b => b.id === currentBooking.id ? { ...b, ...booking } : b)
+        );
         
         showNotification('Booking updated successfully', 'success');
       } else {
         // Create new booking
-        const { error } = await supabase
+        console.log('Creating booking:', booking);
+        const { data, error } = await supabase
           .from('appointments')
-          .insert(booking);
+          .insert(booking)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error details:', error);
+          throw error;
+        }
+        
+        console.log('Insert response:', data);
+        
+        // Update local state after successful creation
+        if (data && data.length > 0) {
+          setAllBookings(prevBookings => [...prevBookings, data[0]]);
+        }
         
         showNotification('Booking created successfully', 'success');
       }
       
-      await fetchBookings();
+      setShowBookingModal(false);
     } catch (error) {
       console.error('Error saving booking:', error);
       throw error;
@@ -221,14 +252,27 @@ export default function AdminBookings() {
 
   const handleStatusChange = async (booking: Booking, status: 'scheduled' | 'completed' | 'missed' | 'cancelled') => {
     try {
-      const { error } = await supabase
+      console.log('Changing status:', booking.id, status);
+      const { data, error } = await supabase
         .from('appointments')
         .update({ status })
-        .eq('id', booking.id);
+        .eq('id', booking.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Status update error details:', error);
+        throw error;
+      }
       
-      await fetchBookings();
+      console.log('Status update response:', data);
+      
+      // Update local state after successful status change
+      if (data && data.length > 0) {
+        setAllBookings(prevBookings => 
+          prevBookings.map(b => b.id === booking.id ? { ...b, status } : b)
+        );
+      }
+      
       showNotification(`Booking marked as ${status}`, 'success');
     } catch (error) {
       console.error('Error updating booking status:', error);

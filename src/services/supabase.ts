@@ -8,7 +8,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'appointment-system'
+    }
+  }
+});
 
 export const appointmentService = {
   async getAppointmentsByCaseId(caseId: string) {
