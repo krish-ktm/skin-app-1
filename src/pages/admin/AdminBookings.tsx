@@ -30,6 +30,7 @@ export default function AdminBookings() {
     message: string;
     type: 'success' | 'error';
   } | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const itemsPerPage = 100; // Increased from 10 to 100
 
@@ -39,7 +40,7 @@ export default function AdminBookings() {
 
   async function fetchBookings() {
     try {
-      setIsLoading(true);
+      setIsLoading(isInitialLoad);
       
       // Start building the query
       let query = supabase
@@ -102,6 +103,7 @@ export default function AdminBookings() {
       showNotification('Failed to fetch bookings', 'error');
     } finally {
       setIsLoading(false);
+      setIsInitialLoad(false);
     }
   }
 
@@ -158,6 +160,9 @@ export default function AdminBookings() {
     
     setIsDeleting(true);
     try {
+      // Optimistically update UI
+      setBookings(prevBookings => prevBookings.filter(b => b.id !== currentBooking.id));
+      
       const { error } = await supabase
         .from('appointments')
         .delete()
@@ -165,11 +170,11 @@ export default function AdminBookings() {
 
       if (error) {
         console.error('Delete error details:', error);
+        // Revert optimistic update on error
+        await fetchBookings();
         throw error;
       }
       
-      // Refresh the current page after deletion
-      await fetchBookings();
       setShowDeleteModal(false);
       showNotification('Booking deleted successfully', 'success');
     } catch (error) {
@@ -185,6 +190,12 @@ export default function AdminBookings() {
       if (currentBooking) {
         // Update existing booking
         console.log('Updating booking:', booking);
+        
+        // Optimistically update UI
+        setBookings(prevBookings => 
+          prevBookings.map(b => b.id === currentBooking.id ? { ...b, ...booking } : b)
+        );
+        
         const { data, error } = await supabase
           .from('appointments')
           .update(booking)
@@ -193,14 +204,12 @@ export default function AdminBookings() {
 
         if (error) {
           console.error('Update error details:', error);
+          // Revert optimistic update on error
+          await fetchBookings();
           throw error;
         }
         
         console.log('Update response:', data);
-        
-        // Refresh bookings after update
-        await fetchBookings();
-        
         showNotification('Booking updated successfully', 'success');
       } else {
         // Create new booking
@@ -217,8 +226,11 @@ export default function AdminBookings() {
         
         console.log('Insert response:', data);
         
-        // Refresh bookings after creation
-        await fetchBookings();
+        // Add the new booking to the list if it belongs on the current page
+        if (data && data.length > 0) {
+          const newBooking = data[0] as Booking;
+          setBookings(prevBookings => [newBooking, ...prevBookings]);
+        }
         
         showNotification('Booking created successfully', 'success');
       }
@@ -233,6 +245,12 @@ export default function AdminBookings() {
   const handleStatusChange = async (booking: Booking, status: 'scheduled' | 'completed' | 'missed' | 'cancelled') => {
     try {
       console.log('Changing status:', booking.id, status);
+      
+      // Optimistically update UI
+      setBookings(prevBookings => 
+        prevBookings.map(b => b.id === booking.id ? { ...b, status } : b)
+      );
+      
       const { data, error } = await supabase
         .from('appointments')
         .update({ status })
@@ -241,14 +259,12 @@ export default function AdminBookings() {
 
       if (error) {
         console.error('Status update error details:', error);
+        // Revert optimistic update on error
+        await fetchBookings();
         throw error;
       }
       
       console.log('Status update response:', data);
-      
-      // Refresh bookings after status change
-      await fetchBookings();
-      
       showNotification(`Booking marked as ${status}`, 'success');
     } catch (error) {
       console.error('Error updating booking status:', error);
