@@ -8,6 +8,7 @@ export function useAppointmentForm() {
     phone: '',
     caseId: '',
     gender: 'male',
+    age: 0,
   });
   const [isSearchingCase, setIsSearchingCase] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -15,7 +16,13 @@ export function useAppointmentForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Handle age as a number
+    if (name === 'age') {
+      setFormData(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     
     // Clear validation errors when user types
     if (validationErrors[name as keyof ValidationErrors]) {
@@ -33,6 +40,7 @@ export function useAppointmentForm() {
       phone: '',
       caseId: '',
       gender: 'male',
+      age: 0,
     });
     setSearchError(null);
     setValidationErrors({});
@@ -62,6 +70,13 @@ export function useAppointmentForm() {
     // Case ID validation (only for returning patients)
     if (formData.caseId && formData.caseId.trim().length < 3) {
       errors.caseId = 'Case ID must be at least 3 characters';
+    }
+    
+    // Age validation
+    if (formData.age <= 0) {
+      errors.age = 'Age must be greater than 0';
+    } else if (formData.age > 120) {
+      errors.age = 'Age must be less than 120';
     }
     
     setValidationErrors(errors);
@@ -95,6 +110,7 @@ export function useAppointmentForm() {
         name: data.name,
         phone: data.phone,
         gender: data.gender,
+        age: data.age || 0,
       }));
       return true;
     } catch (error: any) {

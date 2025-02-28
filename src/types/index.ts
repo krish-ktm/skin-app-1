@@ -8,6 +8,7 @@ export interface Appointment {
   appointment_time: string;
   created_at: string;
   gender: string;
+  age: number;
   user_id?: string;
 }
 
@@ -28,6 +29,7 @@ export interface FormData {
   phone: string;
   caseId: string;
   gender: string;
+  age: number;
 }
 
 export interface ValidationErrors {
@@ -35,4 +37,5 @@ export interface ValidationErrors {
   phone?: string | null;
   caseId?: string | null;
   gender?: string | null;
+  age?: string | null;
 }

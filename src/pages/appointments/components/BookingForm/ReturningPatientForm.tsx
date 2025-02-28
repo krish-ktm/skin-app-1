@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Search, CheckCircle2, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Search, CheckCircle2, RotateCcw, Calendar } from 'lucide-react';
 import { PulseLoader } from 'react-spinners';
 import { FormData, ValidationErrors } from '../../../../types';
 import { ErrorMessage } from './ErrorMessage';
@@ -50,6 +50,9 @@ export function ReturningPatientForm({
     } as React.ChangeEvent<HTMLInputElement>);
     onInputChange({
       target: { name: 'gender', value: 'male' }
+    } as React.ChangeEvent<HTMLInputElement>);
+    onInputChange({
+      target: { name: 'age', value: '0' }
     } as React.ChangeEvent<HTMLInputElement>);
   };
 
@@ -159,6 +162,12 @@ export function ReturningPatientForm({
                   <p className="text-sm font-medium text-green-700">Phone</p>
                   <p className="text-base sm:text-lg font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-green-100">
                     {formData.phone}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-green-700">Age</p>
+                  <p className="text-base sm:text-lg font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-green-100">
+                    {formData.age}
                   </p>
                 </div>
                 <div className="space-y-2">

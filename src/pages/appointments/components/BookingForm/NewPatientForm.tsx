@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, User, Phone } from 'lucide-react';
+import { ArrowLeft, User, Phone, Calendar } from 'lucide-react';
 import { FormData, ValidationErrors } from '../../../../types';
 import { ErrorMessage } from './ErrorMessage';
 import { SubmitButton } from './SubmitButton';
@@ -106,6 +106,29 @@ export function NewPatientForm({
           </div>
 
           <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">Age</label>
+            <div className="relative">
+              <input
+                type="number"
+                name="age"
+                value={formData.age || ''}
+                onChange={onInputChange}
+                min="1"
+                max="120"
+                className={`w-full px-6 py-4 pl-12 text-base sm:text-lg border-2 ${
+                  validationErrors.age ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-xl bg-white transition-shadow hover:shadow-md`}
+                required
+                disabled={isLoading}
+              />
+              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+            </div>
+            {validationErrors.age && (
+              <p className="text-sm text-red-600 mt-1">{validationErrors.age}</p>
+            )}
+          </div>
+
+          <div className="space-y-3">
             <label className="block text-sm font-medium text-gray-700">Gender</label>
             <GenderSelect
               value={formData.gender}
@@ -119,7 +142,7 @@ export function NewPatientForm({
         </motion.div>
       </div>
 
-      {formData.name && formData.phone && selectedDate && selectedTime && (
+      {formData.name && formData.phone && formData.age > 0 && selectedDate && selectedTime && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

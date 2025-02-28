@@ -62,7 +62,8 @@ export function useAppointmentBooking(
         phone: formData.phone,
         appointment_date: dateStr,
         appointment_time: selectedTime,
-        gender: formData.gender, // Use the selected gender from the form
+        gender: formData.gender,
+        age: formData.age,
         user_id: user.id
       };
 
@@ -82,7 +83,8 @@ export function useAppointmentBooking(
         appointment_date: data.appointment_date,
         appointment_time: data.appointment_time,
         created_at: data.created_at,
-        gender: data.gender
+        gender: data.gender,
+        age: data.age
       };
 
       setBookingStatus({

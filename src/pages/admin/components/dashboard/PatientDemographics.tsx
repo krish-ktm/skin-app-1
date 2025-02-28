@@ -35,11 +35,43 @@ export function PatientDemographics() {
       // In a real application, you would fetch actual demographic data
       // For this demo, we'll generate simulated data
       
-      // Simulate age group distribution
-      const ageGroups = {
-        labels: ['0-18', '19-30', '31-45', '46-60', '61+'],
-        data: [15, 28, 35, 17, 5]
-      };
+      // Try to get real age distribution if available
+      const { data: appointments, error } = await supabase
+        .from('appointments')
+        .select('age');
+      
+      let ageGroups;
+      
+      if (!error && appointments && appointments.length > 0) {
+        // Process real age data
+        const ageRanges = {
+          '0-18': 0,
+          '19-30': 0,
+          '31-45': 0,
+          '46-60': 0,
+          '61+': 0
+        };
+        
+        appointments.forEach(appointment => {
+          const age = appointment.age || 0;
+          if (age <= 18) ageRanges['0-18']++;
+          else if (age <= 30) ageRanges['19-30']++;
+          else if (age <= 45) ageRanges['31-45']++;
+          else if (age <= 60) ageRanges['46-60']++;
+          else ageRanges['61+']++;
+        });
+        
+        ageGroups = {
+          labels: Object.keys(ageRanges),
+          data: Object.values(ageRanges)
+        };
+      } else {
+        // Fallback to simulated data
+        ageGroups = {
+          labels: ['0-18', '19-30', '31-45', '46-60', '61+'],
+          data: [10, 25, 35, 20, 10]
+        };
+      }
       
       // Simulate location distribution
       const locations = {

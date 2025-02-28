@@ -44,11 +44,18 @@ export function RecentBookings({ recentBookings }: RecentBookingsProps) {
                       {new Date(booking.appointment_date).toLocaleDateString()} at {formatTimeSlot(booking.appointment_time)}
                     </p>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    booking.gender === 'male' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
-                  }`}>
-                    {booking.gender}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      booking.gender === 'male' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
+                    }`}>
+                      {booking.gender}
+                    </span>
+                    {booking.age && (
+                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                        {booking.age} yrs
+                      </span>
+                    )}
+                  </div>
                 </div>
               </li>
             ))}
