@@ -4,8 +4,11 @@ import { X, Calendar, Clock, User, Phone, Users } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { GenderSelect } from '../../../../components/ui/GenderSelect';
+import { TimeSlots } from '../TimeSlots';
+import { supabase } from '../../../../lib/supabase';
 import type { Booking } from '../../types';
 import { nanoid } from 'nanoid';
+import { isTimeSlotExpired } from '../../../../utils/date';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -27,6 +30,9 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<{ time: string; available: boolean; bookingCount?: number }[]>([]);
+  const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState(false);
+  const [timeSlotsError, setTimeSlotsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (booking) {
@@ -48,6 +54,118 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
     }
   }, [booking, isOpen]);
 
+  useEffect(() => {
+    if (formData.appointment_date) {
+      fetchTimeSlots(formData.appointment_date);
+    }
+  }, [formData.appointment_date]);
+
+  const fetchTimeSlots = async (date: string) => {
+    setIsLoadingTimeSlots(true);
+    setTimeSlotsError(null);
+    try {
+      // Get appointments for the date
+      const { data: appointments, error: aptError } = await supabase
+        .from('appointments')
+        .select('appointment_time, id')
+        .eq('appointment_date', date);
+
+      if (aptError) throw aptError;
+
+      // Get disabled slots for the date
+      const { data: disabledSlots, error: disabledError } = await supabase
+        .from('time_slot_settings')
+        .select('time, is_disabled')
+        .eq('date', date)
+        .eq('is_disabled', true);
+
+      if (disabledError) throw disabledError;
+
+      // Check if the entire day is disabled
+      const isDayDisabled = disabledSlots?.some(slot => slot.time === null);
+      
+      if (isDayDisabled) {
+        setAvailableTimeSlots([]);
+        throw new Error('This day is not available for bookings');
+      }
+
+      // Generate time slots from 9 AM to 11 PM with 30-minute intervals
+      const slots = [];
+      for (let hour = 9; hour < 23; hour++) {
+        // Add both :00 and :30 slots for each hour
+        slots.push({
+          time: `${hour.toString().padStart(2, '0')}:00`,
+          available: true
+        });
+        slots.push({
+          time: `${hour.toString().padStart(2, '0')}:30`,
+          available: true
+        });
+      }
+      // Add the last slot at 11 PM
+      slots.push({
+        time: `23:00`,
+        available: true
+      });
+
+      // Count bookings for each time slot
+      const counts: { [key: string]: number } = {};
+      appointments?.forEach(apt => {
+        // Skip counting the current booking when editing
+        if (booking && apt.id === booking.id) return;
+        
+        counts[apt.appointment_time] = (counts[apt.appointment_time] || 0) + 1;
+      });
+
+      // Create a date object for the selected date to check expired time slots
+      const selectedDate = new Date(date);
+      
+      // Update available slots
+      const updatedSlots = slots.map(slot => {
+        const isDisabled = disabledSlots?.some(ds => ds.time === slot.time);
+        const isExpired = isTimeSlotExpired(slot.time, selectedDate);
+        
+        return {
+          ...slot,
+          bookingCount: counts[slot.time] || 0,
+          available: !isDisabled && !isExpired && (counts[slot.time] || 0) < 4
+        };
+      });
+
+      setAvailableTimeSlots(updatedSlots);
+      
+      // If editing and the current time slot is expired, don't reset it
+      // This allows admins to keep the original time slot when editing past appointments
+      if (booking && formData.appointment_time) {
+        const currentTimeSlot = updatedSlots.find(slot => slot.time === formData.appointment_time);
+        if (currentTimeSlot && !currentTimeSlot.available) {
+          // Add the current time slot as a special case for this edit
+          const specialSlot = {
+            ...currentTimeSlot,
+            available: true,
+            isOriginalSlot: true
+          };
+          
+          // Find the index of the current time slot
+          const index = updatedSlots.findIndex(slot => slot.time === formData.appointment_time);
+          
+          // Replace the slot with our special version
+          if (index !== -1) {
+            const newSlots = [...updatedSlots];
+            newSlots[index] = specialSlot;
+            setAvailableTimeSlots(newSlots);
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching time slots:', error);
+      setTimeSlotsError(error.message);
+      setAvailableTimeSlots([]);
+    } finally {
+      setIsLoadingTimeSlots(false);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -68,6 +186,13 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
     setFormData(prev => ({ ...prev, gender: value }));
     if (errors.gender) {
       setErrors(prev => ({ ...prev, gender: '' }));
+    }
+  };
+
+  const handleTimeSelect = (time: string) => {
+    setFormData(prev => ({ ...prev, appointment_time: time }));
+    if (errors.appointment_time) {
+      setErrors(prev => ({ ...prev, appointment_time: '' }));
     }
   };
 
@@ -193,17 +318,6 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
                     required
                   />
                   
-                  <Input
-                    label="Time"
-                    type="time"
-                    name="appointment_time"
-                    value={formData.appointment_time || ''}
-                    onChange={handleChange}
-                    error={errors.appointment_time}
-                    icon={<Clock className="h-5 w-5" />}
-                    required
-                  />
-                  
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">Gender</label>
                     <GenderSelect
@@ -250,6 +364,27 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
                       readOnly
                       className="bg-gray-50"
                     />
+                  )}
+                </div>
+
+                {/* Time Slots Selection */}
+                <div className="mt-4">
+                  {formData.appointment_date ? (
+                    <TimeSlots
+                      slots={availableTimeSlots}
+                      selectedTime={formData.appointment_time || ''}
+                      onTimeSelect={handleTimeSelect}
+                      isLoading={isLoadingTimeSlots}
+                      error={timeSlotsError}
+                      isEditing={!!booking}
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg">
+                      Please select a date to view available time slots
+                    </div>
+                  )}
+                  {errors.appointment_time && (
+                    <p className="text-sm text-red-600 mt-1">{errors.appointment_time}</p>
                   )}
                 </div>
 
