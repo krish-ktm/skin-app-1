@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronUp, ChevronDown, Edit, Trash2, CheckCircle, XCircle, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronUp, ChevronDown, Edit, Trash2, CheckCircle, XCircle, Clock, ChevronRight } from 'lucide-react';
 import type { Booking, SortField } from '../../types';
 import { Button } from '../../../../components/ui/Button';
 import { formatTimeSlot } from '../../../../utils/date';
@@ -23,6 +23,8 @@ export function BookingsTable({
   onDelete,
   onStatusChange
 }: BookingsTableProps) {
+  const [openStatusDropdown, setOpenStatusDropdown] = useState<string | null>(null);
+
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
       return <ChevronUp className="h-4 w-4 text-gray-400" />;
@@ -58,6 +60,10 @@ export function BookingsTable({
       default:
         return <Clock className="h-4 w-4 text-blue-500" />;
     }
+  };
+
+  const toggleStatusDropdown = (bookingId: string) => {
+    setOpenStatusDropdown(openStatusDropdown === bookingId ? null : bookingId);
   };
 
   return (
@@ -174,45 +180,63 @@ export function BookingsTable({
                   {booking.age || 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="relative group">
-                    <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadgeClass(booking.status)}`}>
+                  <div className="relative">
+                    <button
+                      onClick={() => toggleStatusDropdown(booking.id)}
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadgeClass(booking.status)}`}
+                    >
                       {getStatusIcon(booking.status)}
                       <span className="ml-1 capitalize">{booking.status || 'scheduled'}</span>
-                    </div>
+                      <ChevronRight className={`ml-1 h-3 w-3 transition-transform ${openStatusDropdown === booking.id ? 'rotate-90' : ''}`} />
+                    </button>
                     
-                    {/* Status dropdown */}
-                    <div className="hidden group-hover:block absolute left-0 mt-1 w-40 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                      <div className="py-1">
-                        <button 
-                          onClick={() => onStatusChange(booking, 'scheduled')}
-                          className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
-                        >
-                          <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                          Scheduled
-                        </button>
-                        <button 
-                          onClick={() => onStatusChange(booking, 'completed')}
-                          className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                          Completed
-                        </button>
-                        <button 
-                          onClick={() => onStatusChange(booking, 'missed')}
-                          className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
-                        >
-                          <XCircle className="h-4 w-4 mr-2 text-red-500" />
-                          Missed
-                        </button>
-                        <button 
-                          onClick={() => onStatusChange(booking, 'cancelled')}
-                          className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
-                        >
-                          <XCircle className="h-4 w-4 mr-2 text-gray-500" />
-                          Cancelled
-                        </button>
+                    {/* Status dropdown - now controlled by click instead of hover */}
+                    {openStatusDropdown === booking.id && (
+                      <div className="absolute left-0 mt-1 w-40 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                        <div className="py-1">
+                          <button 
+                            onClick={() => {
+                              onStatusChange(booking, 'scheduled');
+                              setOpenStatusDropdown(null);
+                            }}
+                            className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
+                          >
+                            <Clock className="h-4 w-4 mr-2 text-blue-500" />
+                            Scheduled
+                          </button>
+                          <button 
+                            onClick={() => {
+                              onStatusChange(booking, 'completed');
+                              setOpenStatusDropdown(null);
+                            }}
+                            className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                            Completed
+                          </button>
+                          <button 
+                            onClick={() => {
+                              onStatusChange(booking, 'missed');
+                              setOpenStatusDropdown(null);
+                            }}
+                            className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
+                          >
+                            <XCircle className="h-4 w-4 mr-2 text-red-500" />
+                            Missed
+                          </button>
+                          <button 
+                            onClick={() => {
+                              onStatusChange(booking, 'cancelled');
+                              setOpenStatusDropdown(null);
+                            }}
+                            className="flex items-center w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
+                          >
+                            <XCircle className="h-4 w-4 mr-2 text-gray-500" />
+                            Cancelled
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
