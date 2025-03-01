@@ -31,6 +31,10 @@ export default function AdminBookings() {
     type: 'success' | 'error';
   } | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [actionInProgress, setActionInProgress] = useState<{
+    type: 'fetch' | 'delete' | 'update' | 'create' | 'status';
+    message: string;
+  } | null>(null);
   
   const itemsPerPage = 100; // Increased from 10 to 100
 
@@ -41,6 +45,7 @@ export default function AdminBookings() {
   async function fetchBookings() {
     try {
       setIsLoading(isInitialLoad);
+      setActionInProgress({ type: 'fetch', message: 'Loading bookings...' });
       
       // Start building the query
       let query = supabase
@@ -104,6 +109,7 @@ export default function AdminBookings() {
     } finally {
       setIsLoading(false);
       setIsInitialLoad(false);
+      setActionInProgress(null);
     }
   }
 
@@ -159,6 +165,7 @@ export default function AdminBookings() {
     if (!currentBooking) return;
     
     setIsDeleting(true);
+    setActionInProgress({ type: 'delete', message: 'Deleting booking...' });
     try {
       // Optimistically update UI
       setBookings(prevBookings => prevBookings.filter(b => b.id !== currentBooking.id));
@@ -182,6 +189,7 @@ export default function AdminBookings() {
       showNotification('Failed to delete booking', 'error');
     } finally {
       setIsDeleting(false);
+      setActionInProgress(null);
     }
   };
 
@@ -190,6 +198,7 @@ export default function AdminBookings() {
       if (currentBooking) {
         // Update existing booking
         console.log('Updating booking:', booking);
+        setActionInProgress({ type: 'update', message: 'Updating booking...' });
         
         // Optimistically update UI
         setBookings(prevBookings => 
@@ -214,6 +223,8 @@ export default function AdminBookings() {
       } else {
         // Create new booking
         console.log('Creating booking:', booking);
+        setActionInProgress({ type: 'create', message: 'Creating booking...' });
+        
         const { data, error } = await supabase
           .from('appointments')
           .insert(booking)
@@ -239,12 +250,15 @@ export default function AdminBookings() {
     } catch (error) {
       console.error('Error saving booking:', error);
       throw error;
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const handleStatusChange = async (booking: Booking, status: 'scheduled' | 'completed' | 'missed' | 'cancelled') => {
     try {
       console.log('Changing status:', booking.id, status);
+      setActionInProgress({ type: 'status', message: `Updating status to ${status}...` });
       
       // Optimistically update UI
       setBookings(prevBookings => 
@@ -269,6 +283,8 @@ export default function AdminBookings() {
     } catch (error) {
       console.error('Error updating booking status:', error);
       showNotification('Failed to update booking status', 'error');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
@@ -324,7 +340,43 @@ export default function AdminBookings() {
         onAddBooking={handleAddBooking}
       />
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden relative">
+        {/* Progress Bar for Database Actions */}
+        <AnimatePresence>
+          {actionInProgress && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-0 left-0 right-0 z-20 bg-white bg-opacity-90 border-b border-blue-100 p-2"
+            >
+              <div className="flex items-center gap-3 px-4">
+                <div className="w-5 h-5">
+                  <PulseLoader size={5} color="#3B82F6" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">{actionInProgress.message}</p>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-blue-500 rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ 
+                        width: ["0%", "50%", "90%", "95%"],
+                      }}
+                      transition={{ 
+                        times: [0, 0.4, 0.8, 1],
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatType: "loop"
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {isLoading && bookings.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <PulseLoader color="#3B82F6" />
