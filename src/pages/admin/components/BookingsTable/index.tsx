@@ -173,7 +173,7 @@ export function BookingsTable({
             </th>
           </tr>
         </thead>
-        <tbody className={`bg-white divide-y divide-gray-200 ${isLoading ? 'opacity-40' : ''}`}>
+        <tbody className={`bg-white divide-y divide-gray-200 ${isLoading ? 'opacity-50 blur-[0.5px]' : ''}`}>
           {bookings.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
@@ -211,11 +211,7 @@ export function BookingsTable({
                       disabled={statusUpdating === booking.id}
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadgeClass(booking.status)}`}
                     >
-                      {statusUpdating === booking.id ? (
-                        <div className="animate-spin -ml-1 mr-2 h-3 w-3 border-2 border-current border-t-transparent rounded-full"></div>
-                      ) : (
-                        getStatusIcon(booking.status)
-                      )}
+                      {getStatusIcon(booking.status)}
                       <span className="ml-1 capitalize">{booking.status || 'scheduled'}</span>
                       <ChevronRight className={`ml-1 h-3 w-3 transition-transform ${openStatusDropdown === booking.id ? 'rotate-90' : ''}`} />
                     </button>

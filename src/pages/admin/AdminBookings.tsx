@@ -398,7 +398,7 @@ export default function AdminBookings() {
               onEdit={handleEditBooking}
               onDelete={handleDeleteBooking}
               onStatusChange={handleStatusChange}
-              isLoading={isLoading}
+              isLoading={!!actionInProgress}
             />
 
             <BookingsPagination
