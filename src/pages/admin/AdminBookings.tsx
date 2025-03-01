@@ -349,10 +349,14 @@ export default function AdminBookings() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               className="absolute top-0 left-0 right-0 z-20 bg-white bg-opacity-90 border-b border-blue-100 p-2"
+              style={{
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)'
+              }}
             >
               <div className="flex items-center gap-3 px-4">
-                <div className="w-5 h-5">
-                  <PulseLoader size={5} color="#3B82F6" />
+                <div className="w-5 h-5 flex items-center justify-center">
+                  <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-700">{actionInProgress.message}</p>
@@ -377,9 +381,12 @@ export default function AdminBookings() {
           )}
         </AnimatePresence>
 
-        {isLoading && bookings.length === 0 ? (
+        {isInitialLoad ? (
           <div className="flex justify-center items-center h-64">
-            <PulseLoader color="#3B82F6" />
+            <div className="flex flex-col items-center">
+              <PulseLoader color="#3B82F6" />
+              <p className="mt-4 text-gray-500 text-sm">Loading bookings...</p>
+            </div>
           </div>
         ) : (
           <>

@@ -78,14 +78,18 @@ export function BookingsTable({
 
   return (
     <div className="overflow-x-auto relative">
-      {isLoading && bookings.length > 0 && (
-        <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
-          <div className="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
-            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>Loading...</span>
+      {isLoading && (
+        <div 
+          className="absolute inset-0 z-10 flex items-center justify-center"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)'
+          }}
+        >
+          <div className="bg-blue-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3">
+            <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+            <span className="font-medium">Loading bookings...</span>
           </div>
         </div>
       )}
@@ -169,8 +173,8 @@ export function BookingsTable({
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {!isLoading && bookings.length === 0 ? (
+        <tbody className={`bg-white divide-y divide-gray-200 ${isLoading ? 'opacity-40' : ''}`}>
+          {bookings.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
                 No bookings found
@@ -178,7 +182,7 @@ export function BookingsTable({
             </tr>
           ) : (
             bookings.map((booking) => (
-              <tr key={booking.id} className="hover:bg-gray-50">
+              <tr key={booking.id} className="hover:bg-gray-50 transition-colors duration-150">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {booking.case_id}
                 </td>
@@ -208,10 +212,7 @@ export function BookingsTable({
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadgeClass(booking.status)}`}
                     >
                       {statusUpdating === booking.id ? (
-                        <svg className="animate-spin -ml-1 mr-2 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <div className="animate-spin -ml-1 mr-2 h-3 w-3 border-2 border-current border-t-transparent rounded-full"></div>
                       ) : (
                         getStatusIcon(booking.status)
                       )}
