@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { PulseLoader } from 'react-spinners';
 import { BookingsFilters } from './components/BookingsFilters';
 import { BookingsTable } from './components/BookingsTable';
+import { BookingsPagination } from './components/BookingsPagination';
 import { BookingModal } from './components/BookingModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import type { Booking, SortField, SortOrder, Filter, DateRange } from './types';
@@ -13,6 +14,9 @@ export default function AdminBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [sortField, setSortField] = useState<SortField>('appointment_date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -32,12 +36,11 @@ export default function AdminBookings() {
     message: string;
   } | null>(null);
   
+  const itemsPerPage = 100; // Increased from 10 to 100
+
   useEffect(() => {
-    // Only fetch on initial load, not on filter changes
-    if (isInitialLoad) {
-      fetchBookings();
-    }
-  }, [sortField, sortOrder]);
+    fetchBookings();
+  }, [currentPage, searchTerm, sortField, sortOrder, filters, dateRange]);
 
   async function fetchBookings() {
     try {
@@ -52,7 +55,7 @@ export default function AdminBookings() {
       // Start building the query
       let query = supabase
         .from('appointments')
-        .select('*');
+        .select('*', { count: 'exact' });
       
       // Apply search if provided
       if (searchTerm) {
@@ -80,8 +83,21 @@ export default function AdminBookings() {
         query = query.lte('appointment_date', dateRange.end);
       }
       
-      // Apply sorting
-      query = query.order(sortField, { ascending: sortOrder === 'asc' });
+      // Get total count first
+      const { count, error: countError } = await query;
+      
+      if (countError) {
+        console.error('Count error details:', countError);
+        throw countError;
+      }
+      
+      setTotalCount(count || 0);
+      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
+      
+      // Apply sorting and pagination
+      query = query
+        .order(sortField, { ascending: sortOrder === 'asc' })
+        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
       
       // Execute the query
       const { data, error } = await query;
@@ -109,7 +125,7 @@ export default function AdminBookings() {
       setSortField(field);
       setSortOrder('asc');
     }
-    fetchBookings(); // Fetch with new sort parameters
+    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   const handleFilterChange = (field: string, value: string) => {
@@ -125,23 +141,14 @@ export default function AdminBookings() {
     } else if (value) {
       setFilters([...filters, { field, value }]);
     }
-    // Don't fetch here - wait for Apply Filters button
-  };
-
-  const handleApplyFilters = () => {
-    fetchBookings(); // Fetch with new filters
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const clearFilters = () => {
     setFilters([]);
     setDateRange({ start: '', end: '' });
     setSearchTerm('');
-    fetchBookings(); // Fetch without filters
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    // Don't fetch here - wait for Apply Filters button
+    setCurrentPage(1);
   };
 
   const handleAddBooking = () => {
@@ -318,16 +325,21 @@ export default function AdminBookings() {
 
       <BookingsFilters
         searchTerm={searchTerm}
-        onSearchChange={handleSearchChange}
+        onSearchChange={(e) => {
+          setSearchTerm(e.target.value);
+          setCurrentPage(1);
+        }}
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters(!showFilters)}
         filters={filters}
         onFilterChange={handleFilterChange}
         dateRange={dateRange}
-        onDateRangeChange={setDateRange}
+        onDateRangeChange={(range) => {
+          setDateRange(range);
+          setCurrentPage(1);
+        }}
         onClearFilters={clearFilters}
         onAddBooking={handleAddBooking}
-        onApplyFilters={handleApplyFilters}
       />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden relative">
@@ -390,22 +402,14 @@ export default function AdminBookings() {
               onStatusChange={handleStatusChange}
               isLoading={false}
             />
-            
-            {/* Display total count at the bottom */}
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <div className="text-sm text-gray-700">
-                  Total: <span className="font-medium">{bookings.length}</span> bookings
-                </div>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{bookings.length}</span> bookings
-                  </p>
-                </div>
-              </div>
-            </div>
+
+            <BookingsPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalCount}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
           </>
         )}
       </div>
