@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Bar } from 'react-chartjs-2';
+import { useAnalytics } from './AnalyticsContext';
 
 interface TimeSlotDistributionProps {
   timeSlotDistribution: {
@@ -10,6 +11,7 @@ interface TimeSlotDistributionProps {
 }
 
 export function TimeSlotDistribution({ timeSlotDistribution }: TimeSlotDistributionProps) {
+  const { timeRange } = useAnalytics();
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
@@ -144,13 +146,26 @@ export function TimeSlotDistribution({ timeSlotDistribution }: TimeSlotDistribut
     },
   };
 
+  // Get time range label for display
+  const getTimeRangeLabel = () => {
+    switch (timeRange) {
+      case '7d': return 'Last 7 days';
+      case '30d': return 'Last 30 days';
+      case '90d': return 'Last 90 days';
+      case '6m': return 'Last 6 months';
+      case '1y': return 'Last year';
+      case 'all': return 'All time';
+      default: return 'Selected period';
+    }
+  };
+
   return (
     <motion.div 
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
       <h3 className="text-lg font-medium text-gray-800 mb-1">Popular Time Slots</h3>
-      <p className="text-sm text-gray-500 mb-4">All-time booking distribution</p>
+      <p className="text-sm text-gray-500 mb-4">{getTimeRangeLabel()} booking distribution</p>
       <div className="h-64">
         {timeSlotDistribution.length > 0 ? (
           <Bar 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Doughnut } from 'react-chartjs-2';
+import { useAnalytics } from './AnalyticsContext';
 
 interface GenderDistributionProps {
   genderDistribution: {
@@ -10,6 +11,7 @@ interface GenderDistributionProps {
 }
 
 export function GenderDistribution({ genderDistribution }: GenderDistributionProps) {
+  const { timeRange } = useAnalytics();
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
@@ -86,6 +88,19 @@ export function GenderDistribution({ genderDistribution }: GenderDistributionPro
     maintainAspectRatio: false,
   };
 
+  // Get time range label for display
+  const getTimeRangeLabel = () => {
+    switch (timeRange) {
+      case '7d': return 'Last 7 days';
+      case '30d': return 'Last 30 days';
+      case '90d': return 'Last 90 days';
+      case '6m': return 'Last 6 months';
+      case '1y': return 'Last year';
+      case 'all': return 'All time';
+      default: return 'Selected period';
+    }
+  };
+
   return (
     <motion.div 
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
@@ -95,8 +110,8 @@ export function GenderDistribution({ genderDistribution }: GenderDistributionPro
         <span className="mr-2">Gender Distribution</span>
       </h3>
       <p className="text-sm text-gray-500 mb-3">
-        {genderDistribution.male + genderDistribution.female > 0 ? 
-          `Total: ${genderDistribution.male + genderDistribution.female} patients` : 
+        {getTimeRangeLabel()}: {genderDistribution.male + genderDistribution.female > 0 ? 
+          `${genderDistribution.male + genderDistribution.female} patients` : 
           'No data available'}
       </p>
       <div className="h-64 flex items-center justify-center">

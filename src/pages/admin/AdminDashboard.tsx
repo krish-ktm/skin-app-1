@@ -14,6 +14,8 @@ import { SystemStatus } from './components/dashboard/SystemStatus';
 import { DashboardLoader } from './components/dashboard/DashboardLoader';
 import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
 import { AppointmentInsights } from './components/dashboard/AppointmentInsights';
+import { TimeRangeSelector } from './components/dashboard/TimeRangeSelector';
+import { AnalyticsProvider, useAnalytics } from './components/dashboard/AnalyticsContext';
 
 // Register ChartJS components
 ChartJS.register(
@@ -29,7 +31,8 @@ ChartJS.register(
   Filler
 );
 
-export default function AdminDashboard() {
+function DashboardContent() {
+  const { timeRange, setTimeRange, startDate, endDate, refreshTrigger } = useAnalytics();
   const [stats, setStats] = useState({
     totalBookings: 0,
     todayBookings: 0,
@@ -50,16 +53,18 @@ export default function AdminDashboard() {
     fetchBookingTrend();
     fetchTimeSlotDistribution();
     fetchRecentBookings();
-  }, []);
+  }, [timeRange, refreshTrigger]);
 
   async function fetchStats() {
     try {
+      setIsLoading(true);
       const today = new Date().toISOString().split('T')[0];
       
-      // Total bookings
+      // Total bookings within the selected time range
       const { count: totalCount } = await supabase
         .from('appointments')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', startDate.toISOString());
 
       // Today's bookings
       const { count: todayCount } = await supabase
@@ -73,11 +78,22 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .gte('appointment_date', today);
 
-      // Total unique users
-      const { count: totalUsers } = await supabase
+      // Total unique users within the selected time range
+      const { data: uniqueUsers, error: usersError } = await supabase
         .from('appointments')
-        .select('user_id', { count: 'exact', head: true })
+        .select('user_id')
+        .gte('created_at', startDate.toISOString())
         .not('user_id', 'is', null);
+
+      if (usersError) throw usersError;
+      
+      // Count unique user IDs
+      const uniqueUserIds = new Set();
+      uniqueUsers?.forEach(appointment => {
+        if (appointment.user_id) {
+          uniqueUserIds.add(appointment.user_id);
+        }
+      });
 
       // Time slot stats
       const { data: timeSlotData, error: timeSlotError } = await supabase
@@ -93,7 +109,7 @@ export default function AdminDashboard() {
         totalBookings: totalCount || 0,
         todayBookings: todayCount || 0,
         upcomingBookings: upcomingCount || 0,
-        totalUsers: totalUsers || 0,
+        totalUsers: uniqueUserIds.size,
         totalTimeSlots,
         disabledTimeSlots
       });
@@ -106,17 +122,19 @@ export default function AdminDashboard() {
 
   async function fetchGenderDistribution() {
     try {
-      // Male count
+      // Male count within the selected time range
       const { count: maleCount } = await supabase
         .from('appointments')
         .select('*', { count: 'exact', head: true })
-        .eq('gender', 'male');
+        .eq('gender', 'male')
+        .gte('created_at', startDate.toISOString());
 
-      // Female count
+      // Female count within the selected time range
       const { count: femaleCount } = await supabase
         .from('appointments')
         .select('*', { count: 'exact', head: true })
-        .eq('gender', 'female');
+        .eq('gender', 'female')
+        .gte('created_at', startDate.toISOString());
 
       setGenderDistribution({
         male: maleCount || 0,
@@ -129,6 +147,8 @@ export default function AdminDashboard() {
 
   async function fetchBookingTrend() {
     try {
+      // For booking trend, we'll show the last 7 days regardless of the selected time range
+      // This keeps the chart consistent and readable
       const today = new Date();
       const dates = Array.from({ length: 7 }, (_, i) => {
         const date = subDays(today, 6 - i);
@@ -159,7 +179,8 @@ export default function AdminDashboard() {
     try {
       const { data, error } = await supabase
         .from('appointments')
-        .select('appointment_time');
+        .select('appointment_time')
+        .gte('created_at', startDate.toISOString());
 
       if (error) throw error;
 
@@ -221,8 +242,12 @@ export default function AdminDashboard() {
       animate="visible"
       variants={containerVariants}
     >
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+        <TimeRangeSelector 
+          selectedRange={timeRange}
+          onChange={setTimeRange}
+        />
       </div>
       
       {/* Stats Cards */}
@@ -252,5 +277,13 @@ export default function AdminDashboard() {
       {/* System Status */}
       <SystemStatus />
     </motion.div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <AnalyticsProvider>
+      <DashboardContent />
+    </AnalyticsProvider>
   );
 }

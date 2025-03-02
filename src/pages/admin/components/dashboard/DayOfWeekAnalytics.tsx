@@ -4,6 +4,7 @@ import { Bar } from 'react-chartjs-2';
 import { supabase } from '../../../../lib/supabase';
 import { PulseLoader } from 'react-spinners';
 import { Calendar, Clock } from 'lucide-react';
+import { useAnalytics } from './AnalyticsContext';
 
 interface DayOfWeekAnalyticsProps {}
 
@@ -14,6 +15,7 @@ interface DayData {
 }
 
 export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
+  const { startDate, endDate, refreshTrigger } = useAnalytics();
   const [data, setData] = useState<DayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busiest, setBusiest] = useState<{day: string, count: number}>({day: '', count: 0});
@@ -22,15 +24,17 @@ export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
 
   useEffect(() => {
     fetchDayOfWeekData();
-  }, []);
+  }, [startDate, endDate, refreshTrigger]);
 
   const fetchDayOfWeekData = async () => {
     setIsLoading(true);
     try {
-      // Get all appointments
+      // Get all appointments within the selected date range
       const { data: appointments, error } = await supabase
         .from('appointments')
-        .select('appointment_date');
+        .select('appointment_date')
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString());
       
       if (error) throw error;
       
@@ -178,7 +182,7 @@ export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
       variants={cardVariants}
     >
       <h3 className="text-lg font-medium text-gray-800 mb-1">Appointment Distribution by Day</h3>
-      <p className="text-sm text-gray-500 mb-4">All-time booking patterns</p>
+      <p className="text-sm text-gray-500 mb-4">Booking patterns for selected period</p>
       
       <div className="h-64 mb-6">
         <Bar data={chartData} options={chartOptions} />

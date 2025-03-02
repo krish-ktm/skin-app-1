@@ -4,6 +4,7 @@ import { supabase } from '../../../../lib/supabase';
 import { PulseLoader } from 'react-spinners';
 import { format, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { Calendar, Clock, TrendingUp, AlertTriangle, Users, Zap } from 'lucide-react';
+import { useAnalytics } from './AnalyticsContext';
 
 interface AppointmentInsightsProps {}
 
@@ -32,21 +33,24 @@ interface InsightData {
 }
 
 export function AppointmentInsights({}: AppointmentInsightsProps) {
+  const { startDate, endDate, refreshTrigger } = useAnalytics();
   const [data, setData] = useState<InsightData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leadTime' | 'status' | 'age' | 'peak'>('leadTime');
 
   useEffect(() => {
     fetchInsightData();
-  }, []);
+  }, [startDate, endDate, refreshTrigger]);
 
   const fetchInsightData = async () => {
     setIsLoading(true);
     try {
-      // Get all appointments with relevant data
+      // Get all appointments with relevant data within the selected time range
       const { data: appointments, error } = await supabase
         .from('appointments')
-        .select('created_at, appointment_date, appointment_time, status, age');
+        .select('created_at, appointment_date, appointment_time, status, age')
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString());
       
       if (error) throw error;
       
