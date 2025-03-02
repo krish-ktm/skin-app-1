@@ -44,8 +44,13 @@ export default function AdminBookings() {
 
   async function fetchBookings() {
     try {
-      setIsLoading(isInitialLoad);
-      setActionInProgress({ type: 'fetch', message: 'Loading bookings...' });
+      // Only set isLoading on initial load, not for subsequent fetches
+      if (isInitialLoad) {
+        setIsLoading(true);
+      } else {
+        // For subsequent fetches, use the action progress indicator
+        setActionInProgress({ type: 'fetch', message: 'Loading bookings...' });
+      }
       
       // Start building the query
       let query = supabase
@@ -338,9 +343,9 @@ export default function AdminBookings() {
       />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden relative">
-        {/* Progress Bar for Database Actions */}
+        {/* Progress Bar for Database Actions - Only show when not in initial loading state */}
         <AnimatePresence>
-          {actionInProgress && (
+          {actionInProgress && !isLoading && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -378,7 +383,7 @@ export default function AdminBookings() {
           )}
         </AnimatePresence>
 
-        {isInitialLoad ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="flex flex-col items-center">
               <PulseLoader color="#3B82F6" />
