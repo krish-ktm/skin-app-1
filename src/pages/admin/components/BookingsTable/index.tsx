@@ -173,7 +173,7 @@ export function BookingsTable({
             </th>
           </tr>
         </thead>
-        <tbody className={`bg-white divide-y divide-gray-200 ${isLoading ? 'opacity-50 blur-[0.5px]' : ''}`}>
+        <tbody className="bg-white divide-y divide-gray-200">
           {bookings.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
@@ -206,15 +206,23 @@ export function BookingsTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="relative">
-                    <button
-                      onClick={() => toggleStatusDropdown(booking.id)}
-                      disabled={statusUpdating === booking.id}
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadgeClass(booking.status)}`}
-                    >
-                      {getStatusIcon(booking.status)}
-                      <span className="ml-1 capitalize">{booking.status || 'scheduled'}</span>
-                      <ChevronRight className={`ml-1 h-3 w-3 transition-transform ${openStatusDropdown === booking.id ? 'rotate-90' : ''}`} />
-                    </button>
+                    {statusUpdating === booking.id ? (
+                      <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border bg-blue-50 border-blue-200 text-blue-700">
+                        <div className="flex items-center">
+                          <div className="animate-spin h-3 w-3 border-2 border-blue-500 border-t-transparent rounded-full mr-2"></div>
+                          <span>Updating...</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => toggleStatusDropdown(booking.id)}
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadgeClass(booking.status)}`}
+                      >
+                        {getStatusIcon(booking.status)}
+                        <span className="ml-1 capitalize">{booking.status || 'scheduled'}</span>
+                        <ChevronRight className={`ml-1 h-3 w-3 transition-transform ${openStatusDropdown === booking.id ? 'rotate-90' : ''}`} />
+                      </button>
+                    )}
                     
                     {/* Status dropdown - now controlled by click instead of hover */}
                     {openStatusDropdown === booking.id && (

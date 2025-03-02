@@ -32,7 +32,7 @@ export default function AdminBookings() {
   } | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [actionInProgress, setActionInProgress] = useState<{
-    type: 'fetch' | 'delete' | 'update' | 'create' | 'status';
+    type: 'fetch' | 'delete' | 'update' | 'create';
     message: string;
   } | null>(null);
   
@@ -258,7 +258,6 @@ export default function AdminBookings() {
   const handleStatusChange = async (booking: Booking, status: 'scheduled' | 'completed' | 'missed' | 'cancelled') => {
     try {
       console.log('Changing status:', booking.id, status);
-      setActionInProgress({ type: 'status', message: `Updating status to ${status}...` });
       
       // Optimistically update UI
       setBookings(prevBookings => 
@@ -283,8 +282,6 @@ export default function AdminBookings() {
     } catch (error) {
       console.error('Error updating booking status:', error);
       showNotification('Failed to update booking status', 'error');
-    } finally {
-      setActionInProgress(null);
     }
   };
 
@@ -398,7 +395,7 @@ export default function AdminBookings() {
               onEdit={handleEditBooking}
               onDelete={handleDeleteBooking}
               onStatusChange={handleStatusChange}
-              isLoading={!!actionInProgress}
+              isLoading={false}
             />
 
             <BookingsPagination
