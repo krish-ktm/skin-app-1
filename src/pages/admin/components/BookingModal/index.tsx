@@ -207,16 +207,6 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.name?.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    
-    if (!formData.phone?.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^\d{10}$/.test(formData.phone.trim())) {
-      newErrors.phone = 'Phone must be 10 digits';
-    }
-    
     if (!formData.appointment_date) {
       newErrors.appointment_date = 'Date is required';
     }
@@ -225,12 +215,8 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
       newErrors.appointment_time = 'Time is required';
     }
     
-    if (!formData.gender) {
-      newErrors.gender = 'Gender is required';
-    }
-    
-    if (formData.age === undefined || formData.age < 0) {
-      newErrors.age = 'Age must be a positive number';
+    if (!formData.status) {
+      newErrors.status = 'Status is required';
     }
     
     setErrors(newErrors);
@@ -246,7 +232,23 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
     
     setIsLoading(true);
     try {
-      await onSave(formData);
+      // When editing, only include the fields that should be updatable
+      const updatedData: Partial<Booking> = {
+        appointment_date: formData.appointment_date,
+        appointment_time: formData.appointment_time,
+        status: formData.status as 'scheduled' | 'completed' | 'missed' | 'cancelled'
+      };
+
+      // If it's a new booking, include all fields
+      if (!booking) {
+        updatedData.name = formData.name;
+        updatedData.phone = formData.phone;
+        updatedData.gender = formData.gender;
+        updatedData.age = formData.age;
+        updatedData.case_id = formData.case_id;
+      }
+
+      await onSave(updatedData);
       onClose();
     } catch (error: any) {
       console.error('Error saving booking:', error);
@@ -295,25 +297,83 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Name"
-                    name="name"
-                    value={formData.name || ''}
-                    onChange={handleChange}
-                    error={errors.name}
-                    icon={<User className="h-5 w-5" />}
-                    required
-                  />
-                  
-                  <Input
-                    label="Phone"
-                    name="phone"
-                    value={formData.phone || ''}
-                    onChange={handleChange}
-                    error={errors.phone}
-                    icon={<Phone className="h-5 w-5" />}
-                    required
-                  />
+                  {/* Read-only fields for user information when editing */}
+                  {booking ? (
+                    <>
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-gray-700">Name</label>
+                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                          {booking.name}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                          {booking.phone}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-gray-700">Gender</label>
+                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 capitalize">
+                          {booking.gender}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-gray-700">Age</label>
+                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                          {booking.age}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Input
+                        label="Name"
+                        name="name"
+                        value={formData.name || ''}
+                        onChange={handleChange}
+                        error={errors.name}
+                        icon={<User className="h-5 w-5" />}
+                        required
+                      />
+                      
+                      <Input
+                        label="Phone"
+                        name="phone"
+                        value={formData.phone || ''}
+                        onChange={handleChange}
+                        error={errors.phone}
+                        icon={<Phone className="h-5 w-5" />}
+                        required
+                      />
+                      
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-gray-700">Gender</label>
+                        <GenderSelect
+                          value={formData.gender || 'male'}
+                          onChange={handleGenderChange}
+                        />
+                        {errors.gender && (
+                          <p className="text-sm text-red-600">{errors.gender}</p>
+                        )}
+                      </div>
+                      
+                      <Input
+                        label="Age"
+                        type="number"
+                        name="age"
+                        value={formData.age?.toString() || '0'}
+                        onChange={handleChange}
+                        error={errors.age}
+                        icon={<Users className="h-5 w-5" />}
+                        min="0"
+                        required
+                      />
+                    </>
+                  )}
                   
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">Date</label>
@@ -325,29 +385,6 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
                       <p className="text-sm text-red-600">{errors.appointment_date}</p>
                     )}
                   </div>
-                  
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Gender</label>
-                    <GenderSelect
-                      value={formData.gender || 'male'}
-                      onChange={handleGenderChange}
-                    />
-                    {errors.gender && (
-                      <p className="text-sm text-red-600">{errors.gender}</p>
-                    )}
-                  </div>
-                  
-                  <Input
-                    label="Age"
-                    type="number"
-                    name="age"
-                    value={formData.age?.toString() || '0'}
-                    onChange={handleChange}
-                    error={errors.age}
-                    icon={<Users className="h-5 w-5" />}
-                    min="0"
-                    required
-                  />
                   
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">Status</label>
