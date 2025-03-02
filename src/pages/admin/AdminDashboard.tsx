@@ -14,6 +14,7 @@ import { SystemStatus } from './components/dashboard/SystemStatus';
 import { DashboardLoader } from './components/dashboard/DashboardLoader';
 import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
 import { AppointmentInsights } from './components/dashboard/AppointmentInsights';
+import { PredictiveForecasting } from './components/dashboard/PredictiveForecasting';
 import { AnalyticsProvider } from './components/dashboard/AnalyticsContext';
 
 // Register ChartJS components
@@ -243,6 +244,9 @@ function DashboardContent() {
 
       {/* New Appointment Insights Component */}
       <AppointmentInsights />
+
+      {/* New Predictive Forecasting Component */}
+      <PredictiveForecasting />
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
