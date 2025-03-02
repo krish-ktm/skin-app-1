@@ -39,8 +39,11 @@ export default function AdminBookings() {
   const itemsPerPage = 100; // Increased from 10 to 100
 
   useEffect(() => {
-    fetchBookings();
-  }, [currentPage, searchTerm, sortField, sortOrder, filters, dateRange]);
+    // Only fetch on initial load, not on filter changes
+    if (isInitialLoad) {
+      fetchBookings();
+    }
+  }, [currentPage, sortField, sortOrder]);
 
   async function fetchBookings() {
     try {
@@ -126,6 +129,7 @@ export default function AdminBookings() {
       setSortOrder('asc');
     }
     setCurrentPage(1); // Reset to first page when sorting changes
+    fetchBookings(); // Fetch with new sort parameters
   };
 
   const handleFilterChange = (field: string, value: string) => {
@@ -141,7 +145,12 @@ export default function AdminBookings() {
     } else if (value) {
       setFilters([...filters, { field, value }]);
     }
-    setCurrentPage(1); // Reset to first page when filters change
+    // Don't fetch here - wait for Apply Filters button
+  };
+
+  const handleApplyFilters = () => {
+    setCurrentPage(1); // Reset to first page when filters are applied
+    fetchBookings(); // Fetch with new filters
   };
 
   const clearFilters = () => {
@@ -149,6 +158,12 @@ export default function AdminBookings() {
     setDateRange({ start: '', end: '' });
     setSearchTerm('');
     setCurrentPage(1);
+    fetchBookings(); // Fetch without filters
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    // Don't fetch here - wait for Apply Filters button
   };
 
   const handleAddBooking = () => {
@@ -325,21 +340,16 @@ export default function AdminBookings() {
 
       <BookingsFilters
         searchTerm={searchTerm}
-        onSearchChange={(e) => {
-          setSearchTerm(e.target.value);
-          setCurrentPage(1);
-        }}
+        onSearchChange={handleSearchChange}
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters(!showFilters)}
         filters={filters}
         onFilterChange={handleFilterChange}
         dateRange={dateRange}
-        onDateRangeChange={(range) => {
-          setDateRange(range);
-          setCurrentPage(1);
-        }}
+        onDateRangeChange={setDateRange}
         onClearFilters={clearFilters}
         onAddBooking={handleAddBooking}
+        onApplyFilters={handleApplyFilters}
       />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden relative">
@@ -408,7 +418,10 @@ export default function AdminBookings() {
               totalPages={totalPages}
               totalItems={totalCount}
               itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                fetchBookings();
+              }}
             />
           </>
         )}

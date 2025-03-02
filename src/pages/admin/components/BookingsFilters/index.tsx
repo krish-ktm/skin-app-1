@@ -15,6 +15,7 @@ interface BookingsFiltersProps {
   onDateRangeChange: (range: DateRange) => void;
   onClearFilters: () => void;
   onAddBooking: () => void;
+  onApplyFilters: () => void;
 }
 
 export function BookingsFilters({
@@ -27,10 +28,18 @@ export function BookingsFilters({
   dateRange,
   onDateRangeChange,
   onClearFilters,
-  onAddBooking
+  onAddBooking,
+  onApplyFilters
 }: BookingsFiltersProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [localFilters, setLocalFilters] = useState<FilterType[]>(filters);
+  const [localDateRange, setLocalDateRange] = useState<DateRange>(dateRange);
   const hasActiveFilters = filters.length > 0 || dateRange.start || dateRange.end;
+  const hasLocalChanges = 
+    localSearchTerm !== searchTerm || 
+    JSON.stringify(localFilters) !== JSON.stringify(filters) || 
+    JSON.stringify(localDateRange) !== JSON.stringify(dateRange);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -39,6 +48,74 @@ export function BookingsFilters({
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleLocalSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalSearchTerm(e.target.value);
+  };
+
+  const handleLocalFilterChange = (field: string, value: string) => {
+    const existingFilterIndex = localFilters.findIndex(f => f.field === field);
+    if (existingFilterIndex >= 0) {
+      const newFilters = [...localFilters];
+      if (value) {
+        newFilters[existingFilterIndex] = { field, value };
+      } else {
+        newFilters.splice(existingFilterIndex, 1);
+      }
+      setLocalFilters(newFilters);
+    } else if (value) {
+      setLocalFilters([...localFilters, { field, value }]);
+    }
+  };
+
+  const handleLocalDateRangeChange = (range: DateRange) => {
+    setLocalDateRange(range);
+  };
+
+  const handleApplyFilters = () => {
+    // Update parent state with local values
+    if (localSearchTerm !== searchTerm) {
+      onSearchChange({ target: { value: localSearchTerm } } as React.ChangeEvent<HTMLInputElement>);
+    }
+    
+    // Apply filter changes
+    const filtersToAdd = localFilters.filter(newFilter => 
+      !filters.some(f => f.field === newFilter.field && f.value === newFilter.value)
+    );
+    
+    const filtersToRemove = filters.filter(oldFilter => 
+      !localFilters.some(f => f.field === oldFilter.field && f.value === oldFilter.value)
+    );
+    
+    // Remove filters that are no longer present
+    filtersToRemove.forEach(filter => {
+      onFilterChange(filter.field, '');
+    });
+    
+    // Add new filters
+    filtersToAdd.forEach(filter => {
+      onFilterChange(filter.field, filter.value);
+    });
+    
+    // Update date range
+    if (JSON.stringify(localDateRange) !== JSON.stringify(dateRange)) {
+      onDateRangeChange(localDateRange);
+    }
+    
+    // Call the parent's apply filters function
+    onApplyFilters();
+  };
+
+  const handleClearLocalFilters = () => {
+    setLocalSearchTerm('');
+    setLocalFilters([]);
+    setLocalDateRange({ start: '', end: '' });
+  };
+
+  const handleClearAllFilters = () => {
+    handleClearLocalFilters();
+    onClearFilters();
   };
 
   return (
@@ -50,8 +127,8 @@ export function BookingsFilters({
             <input
               type="text"
               placeholder="Search bookings..."
-              value={searchTerm}
-              onChange={onSearchChange}
+              value={localSearchTerm}
+              onChange={handleLocalSearchChange}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -72,7 +149,7 @@ export function BookingsFilters({
           </Button>
           {hasActiveFilters && (
             <Button
-              onClick={onClearFilters}
+              onClick={handleClearAllFilters}
               variant="outline"
               icon={<X className="h-5 w-5" />}
               className="text-red-600 border-red-200 hover:bg-red-50"
@@ -95,8 +172,8 @@ export function BookingsFilters({
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Gender</label>
                 <select
-                  value={filters.find(f => f.field === 'gender')?.value || ''}
-                  onChange={(e) => onFilterChange('gender', e.target.value)}
+                  value={localFilters.find(f => f.field === 'gender')?.value || ''}
+                  onChange={(e) => handleLocalFilterChange('gender', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">All</option>
@@ -108,8 +185,8 @@ export function BookingsFilters({
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Status</label>
                 <select
-                  value={filters.find(f => f.field === 'status')?.value || ''}
-                  onChange={(e) => onFilterChange('status', e.target.value)}
+                  value={localFilters.find(f => f.field === 'status')?.value || ''}
+                  onChange={(e) => handleLocalFilterChange('status', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">All</option>
@@ -129,11 +206,11 @@ export function BookingsFilters({
                 >
                   <span className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-gray-400" />
-                    {dateRange.start || dateRange.end ? (
+                    {localDateRange.start || localDateRange.end ? (
                       <span className="text-gray-900">
-                        {dateRange.start ? formatDate(dateRange.start) : 'Start'} 
+                        {localDateRange.start ? formatDate(localDateRange.start) : 'Start'} 
                         {' - '} 
-                        {dateRange.end ? formatDate(dateRange.end) : 'End'}
+                        {localDateRange.end ? formatDate(localDateRange.end) : 'End'}
                       </span>
                     ) : (
                       <span className="text-gray-500">Select date range</span>
@@ -159,9 +236,9 @@ export function BookingsFilters({
                           </label>
                           <input
                             type="date"
-                            value={dateRange.start}
-                            onChange={(e) => onDateRangeChange({ ...dateRange, start: e.target.value })}
-                            max={dateRange.end}
+                            value={localDateRange.start}
+                            onChange={(e) => handleLocalDateRangeChange({ ...localDateRange, start: e.target.value })}
+                            max={localDateRange.end}
                             className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
@@ -171,9 +248,9 @@ export function BookingsFilters({
                           </label>
                           <input
                             type="date"
-                            value={dateRange.end}
-                            onChange={(e) => onDateRangeChange({ ...dateRange, end: e.target.value })}
-                            min={dateRange.start}
+                            value={localDateRange.end}
+                            onChange={(e) => handleLocalDateRangeChange({ ...localDateRange, end: e.target.value })}
+                            min={localDateRange.start}
                             className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
@@ -183,7 +260,7 @@ export function BookingsFilters({
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            onDateRangeChange({ start: '', end: '' });
+                            handleLocalDateRangeChange({ start: '', end: '' });
                             setShowDatePicker(false);
                           }}
                         >
@@ -200,6 +277,24 @@ export function BookingsFilters({
                   )}
                 </AnimatePresence>
               </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearLocalFilters}
+              >
+                Reset Filters
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleApplyFilters}
+                disabled={!hasLocalChanges}
+              >
+                Apply Filters
+              </Button>
             </div>
           </motion.div>
         )}
