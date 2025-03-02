@@ -5,6 +5,7 @@ import { BookingsFilters } from './components/BookingsFilters';
 import { BookingsTable } from './components/BookingsTable';
 import { BookingsPagination } from './components/BookingsPagination';
 import { BookingModal } from './components/BookingModal';
+import { QuickBookingModal } from './components/QuickBookingModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import type { Booking, SortField, SortOrder, Filter, DateRange } from './types';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -23,6 +24,7 @@ export default function AdminBookings() {
   const [filters, setFilters] = useState<Filter[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>({ start: '', end: '' });
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showQuickBookingModal, setShowQuickBookingModal] = useState(false);
   const [currentBooking, setCurrentBooking] = useState<Booking | undefined>(undefined);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -156,6 +158,10 @@ export default function AdminBookings() {
     setShowBookingModal(true);
   };
 
+  const handleQuickAddBooking = () => {
+    setShowQuickBookingModal(true);
+  };
+
   const handleEditBooking = (booking: Booking) => {
     setCurrentBooking(booking);
     setShowBookingModal(true);
@@ -252,6 +258,7 @@ export default function AdminBookings() {
       }
       
       setShowBookingModal(false);
+      setShowQuickBookingModal(false);
     } catch (error) {
       console.error('Error saving booking:', error);
       throw error;
@@ -340,6 +347,7 @@ export default function AdminBookings() {
         }}
         onClearFilters={clearFilters}
         onAddBooking={handleAddBooking}
+        onQuickAddBooking={handleQuickAddBooking}
       />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden relative">
@@ -420,6 +428,12 @@ export default function AdminBookings() {
         onSave={handleSaveBooking}
         booking={currentBooking}
         title={currentBooking ? 'Edit Booking' : 'Add New Booking'}
+      />
+
+      <QuickBookingModal
+        isOpen={showQuickBookingModal}
+        onClose={() => setShowQuickBookingModal(false)}
+        onSave={handleSaveBooking}
       />
 
       <ConfirmationModal

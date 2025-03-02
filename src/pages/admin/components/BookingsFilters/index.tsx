@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, X, Calendar, Plus } from 'lucide-react';
+import { Search, Filter, X, Calendar, Plus, Zap } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import type { DateRange, Filter as FilterType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ interface BookingsFiltersProps {
   onDateRangeChange: (range: DateRange) => void;
   onClearFilters: () => void;
   onAddBooking: () => void;
+  onQuickAddBooking?: () => void;
 }
 
 export function BookingsFilters({
@@ -27,7 +28,8 @@ export function BookingsFilters({
   dateRange,
   onDateRangeChange,
   onClearFilters,
-  onAddBooking
+  onAddBooking,
+  onQuickAddBooking
 }: BookingsFiltersProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const hasActiveFilters = filters.length > 0 || dateRange.start || dateRange.end;
@@ -63,13 +65,25 @@ export function BookingsFilters({
           >
             Filters
           </Button>
-          <Button
-            onClick={onAddBooking}
-            variant="primary"
-            icon={<Plus className="h-5 w-5" />}
-          >
-            Add Booking
-          </Button>
+          <div className="flex gap-2">
+            {onQuickAddBooking && (
+              <Button
+                onClick={onQuickAddBooking}
+                variant="primary"
+                icon={<Zap className="h-5 w-5" />}
+                className="bg-green-500 hover:bg-green-600"
+              >
+                Quick Add
+              </Button>
+            )}
+            <Button
+              onClick={onAddBooking}
+              variant="primary"
+              icon={<Plus className="h-5 w-5" />}
+            >
+              Add Booking
+            </Button>
+          </div>
           {hasActiveFilters && (
             <Button
               onClick={onClearFilters}
