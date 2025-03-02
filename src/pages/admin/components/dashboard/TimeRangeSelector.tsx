@@ -12,21 +12,21 @@ interface TimeRangeSelectorProps {
 
 export function TimeRangeSelector({ selectedRange, onChange, className = '' }: TimeRangeSelectorProps) {
   const ranges: { value: TimeRange; label: string; icon?: React.ReactNode }[] = [
-    { value: '7d', label: '7 Days' },
-    { value: '30d', label: '30 Days' },
-    { value: '90d', label: '90 Days' },
-    { value: '6m', label: '6 Months' },
-    { value: '1y', label: '1 Year' },
-    { value: 'all', label: 'All Time' },
+    { value: '7d', label: '7D' },
+    { value: '30d', label: '30D' },
+    { value: '90d', label: '90D' },
+    { value: '6m', label: '6M' },
+    { value: '1y', label: '1Y' },
+    { value: 'all', label: 'All' },
   ];
 
   return (
-    <div className={`flex items-center space-x-2 bg-gray-100 p-1 rounded-lg ${className}`}>
+    <div className={`flex items-center space-x-1 bg-gray-100 p-1 rounded-lg ${className}`}>
       {ranges.map((range) => (
         <button
           key={range.value}
           onClick={() => onChange(range.value)}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+          className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
             selectedRange === range.value
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'

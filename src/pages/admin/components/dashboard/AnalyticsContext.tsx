@@ -2,10 +2,6 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { TimeRange, getTimeRangeDate } from './TimeRangeSelector';
 
 interface AnalyticsContextType {
-  timeRange: TimeRange;
-  setTimeRange: (range: TimeRange) => void;
-  startDate: Date;
-  endDate: Date;
   refreshTrigger: number;
   refreshData: () => void;
 }
@@ -13,11 +9,7 @@ interface AnalyticsContextType {
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
 
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
-  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
-  const startDate = getTimeRangeDate(timeRange);
-  const endDate = new Date();
   
   const refreshData = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -26,10 +18,6 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   return (
     <AnalyticsContext.Provider 
       value={{ 
-        timeRange, 
-        setTimeRange, 
-        startDate, 
-        endDate,
         refreshTrigger,
         refreshData
       }}

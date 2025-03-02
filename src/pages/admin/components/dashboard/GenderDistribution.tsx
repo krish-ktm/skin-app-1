@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Doughnut } from 'react-chartjs-2';
+import { TimeRangeSelector, TimeRange, getTimeRangeDate } from './TimeRangeSelector';
+import { supabase } from '../../../../lib/supabase';
+import { useEffect } from 'react';
 import { useAnalytics } from './AnalyticsContext';
+import { PulseLoader } from 'react-spinners';
 
 interface GenderDistributionProps {
   genderDistribution: {
@@ -10,8 +14,46 @@ interface GenderDistributionProps {
   };
 }
 
-export function GenderDistribution({ genderDistribution }: GenderDistributionProps) {
-  const { timeRange } = useAnalytics();
+export function GenderDistribution({ genderDistribution: initialDistribution }: GenderDistributionProps) {
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+  const [genderDistribution, setGenderDistribution] = useState(initialDistribution);
+  const [isLoading, setIsLoading] = useState(false);
+  const { refreshTrigger } = useAnalytics();
+  
+  const startDate = getTimeRangeDate(timeRange);
+  
+  useEffect(() => {
+    fetchGenderDistribution();
+  }, [timeRange, refreshTrigger]);
+  
+  async function fetchGenderDistribution() {
+    setIsLoading(true);
+    try {
+      // Male count within the selected time range
+      const { count: maleCount } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('gender', 'male')
+        .gte('created_at', startDate.toISOString());
+
+      // Female count within the selected time range
+      const { count: femaleCount } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('gender', 'female')
+        .gte('created_at', startDate.toISOString());
+
+      setGenderDistribution({
+        male: maleCount || 0,
+        female: femaleCount || 0
+      });
+    } catch (error) {
+      console.error('Error fetching gender distribution:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
@@ -106,26 +148,39 @@ export function GenderDistribution({ genderDistribution }: GenderDistributionPro
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
-      <h3 className="text-lg font-medium text-gray-800 mb-1 flex items-center">
-        <span className="mr-2">Gender Distribution</span>
-      </h3>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <h3 className="text-lg font-medium text-gray-800">Gender Distribution</h3>
+        <TimeRangeSelector 
+          selectedRange={timeRange}
+          onChange={setTimeRange}
+        />
+      </div>
+      
       <p className="text-sm text-gray-500 mb-3">
         {getTimeRangeLabel()}: {genderDistribution.male + genderDistribution.female > 0 ? 
           `${genderDistribution.male + genderDistribution.female} patients` : 
           'No data available'}
       </p>
-      <div className="h-64 flex items-center justify-center">
-        {genderDistribution.male + genderDistribution.female > 0 ? (
-          <Doughnut 
-            data={genderChartData} 
-            options={genderChartOptions}
-          />
-        ) : (
-          <div className="text-center text-gray-500">
-            <p>No data available</p>
-          </div>
-        )}
-      </div>
+      
+      {isLoading ? (
+        <div className="h-64 flex items-center justify-center">
+          <PulseLoader color="#3B82F6" />
+        </div>
+      ) : (
+        <div className="h-64 flex items-center justify-center">
+          {genderDistribution.male + genderDistribution.female > 0 ? (
+            <Doughnut 
+              data={genderChartData} 
+              options={genderChartOptions}
+            />
+          ) : (
+            <div className="text-center text-gray-500">
+              <p>No data available</p>
+            </div>
+          )}
+        </div>
+      )}
+      
       {genderDistribution.male + genderDistribution.female > 0 && (
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className="bg-blue-50 p-3 rounded-lg text-center">

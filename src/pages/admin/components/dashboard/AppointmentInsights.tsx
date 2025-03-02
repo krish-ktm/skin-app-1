@@ -4,6 +4,7 @@ import { supabase } from '../../../../lib/supabase';
 import { PulseLoader } from 'react-spinners';
 import { format, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { Calendar, Clock, TrendingUp, AlertTriangle, Users, Zap } from 'lucide-react';
+import { TimeRangeSelector, TimeRange, getTimeRangeDate } from './TimeRangeSelector';
 import { useAnalytics } from './AnalyticsContext';
 
 interface AppointmentInsightsProps {}
@@ -33,14 +34,18 @@ interface InsightData {
 }
 
 export function AppointmentInsights({}: AppointmentInsightsProps) {
-  const { startDate, endDate, refreshTrigger } = useAnalytics();
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [data, setData] = useState<InsightData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'leadTime' | 'status' | 'age' | 'peak'>('leadTime');
+  const { refreshTrigger } = useAnalytics();
+  
+  const startDate = getTimeRangeDate(timeRange);
+  const endDate = new Date();
 
   useEffect(() => {
     fetchInsightData();
-  }, [startDate, endDate, refreshTrigger]);
+  }, [timeRange, refreshTrigger]);
 
   const fetchInsightData = async () => {
     setIsLoading(true);
@@ -200,6 +205,19 @@ export function AppointmentInsights({}: AppointmentInsightsProps) {
     }
   };
 
+  // Get time range label for display
+  const getTimeRangeLabel = () => {
+    switch (timeRange) {
+      case '7d': return 'Last 7 days';
+      case '30d': return 'Last 30 days';
+      case '90d': return 'Last 90 days';
+      case '6m': return 'Last 6 months';
+      case '1y': return 'Last year';
+      case 'all': return 'All time';
+      default: return 'Selected period';
+    }
+  };
+
   if (isLoading) {
     return (
       <motion.div 
@@ -221,53 +239,62 @@ export function AppointmentInsights({}: AppointmentInsightsProps) {
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h3 className="text-lg font-medium text-gray-800">Appointment Insights</h3>
-        <div className="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab('leadTime')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
-              activeTab === 'leadTime' 
-                ? 'bg-white text-blue-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Lead Time</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('status')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
-              activeTab === 'status' 
-                ? 'bg-white text-blue-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">Status</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('age')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
-              activeTab === 'age' 
-                ? 'bg-white text-blue-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Age</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('peak')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
-              activeTab === 'peak' 
-                ? 'bg-white text-blue-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Zap className="h-4 w-4" />
-            <span className="hidden sm:inline">Peak Times</span>
-          </button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab('leadTime')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
+                activeTab === 'leadTime' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Lead Time</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('status')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
+                activeTab === 'status' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Status</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('age')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
+                activeTab === 'age' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Age</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('peak')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
+                activeTab === 'peak' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Zap className="h-4 w-4" />
+              <span className="hidden sm:inline">Peak Times</span>
+            </button>
+          </div>
+          
+          <TimeRangeSelector 
+            selectedRange={timeRange}
+            onChange={setTimeRange}
+          />
         </div>
       </div>
+      
+      <p className="text-sm text-gray-500 mb-4">{getTimeRangeLabel()}</p>
       
       {data && (
         <>

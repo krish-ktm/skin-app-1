@@ -5,6 +5,7 @@ import { supabase } from '../../../../lib/supabase';
 import { PulseLoader } from 'react-spinners';
 import { Calendar, Clock } from 'lucide-react';
 import { useAnalytics } from './AnalyticsContext';
+import { TimeRangeSelector, TimeRange, getTimeRangeDate } from './TimeRangeSelector';
 
 interface DayOfWeekAnalyticsProps {}
 
@@ -15,16 +16,20 @@ interface DayData {
 }
 
 export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
-  const { startDate, endDate, refreshTrigger } = useAnalytics();
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [data, setData] = useState<DayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busiest, setBusiest] = useState<{day: string, count: number}>({day: '', count: 0});
   const [quietest, setQuietest] = useState<{day: string, count: number}>({day: '', count: 0});
   const [totalAppointments, setTotalAppointments] = useState(0);
-
+  const { refreshTrigger } = useAnalytics();
+  
+  const startDate = getTimeRangeDate(timeRange);
+  const endDate = new Date();
+  
   useEffect(() => {
     fetchDayOfWeekData();
-  }, [startDate, endDate, refreshTrigger]);
+  }, [timeRange, refreshTrigger]);
 
   const fetchDayOfWeekData = async () => {
     setIsLoading(true);
@@ -162,6 +167,19 @@ export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
     },
   };
 
+  // Get time range label for display
+  const getTimeRangeLabel = () => {
+    switch (timeRange) {
+      case '7d': return 'Last 7 days';
+      case '30d': return 'Last 30 days';
+      case '90d': return 'Last 90 days';
+      case '6m': return 'Last 6 months';
+      case '1y': return 'Last year';
+      case 'all': return 'All time';
+      default: return 'Selected period';
+    }
+  };
+
   if (isLoading) {
     return (
       <motion.div 
@@ -181,8 +199,15 @@ export function DayOfWeekAnalytics({}: DayOfWeekAnalyticsProps) {
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
-      <h3 className="text-lg font-medium text-gray-800 mb-1">Appointment Distribution by Day</h3>
-      <p className="text-sm text-gray-500 mb-4">Booking patterns for selected period</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <h3 className="text-lg font-medium text-gray-800">Appointment Distribution by Day</h3>
+        <TimeRangeSelector 
+          selectedRange={timeRange}
+          onChange={setTimeRange}
+        />
+      </div>
+      
+      <p className="text-sm text-gray-500 mb-4">{getTimeRangeLabel()} booking patterns</p>
       
       <div className="h-64 mb-6">
         <Bar data={chartData} options={chartOptions} />

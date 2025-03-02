@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Bar } from 'react-chartjs-2';
+import { TimeRangeSelector, TimeRange, getTimeRangeDate } from './TimeRangeSelector';
+import { supabase } from '../../../../lib/supabase';
 import { useAnalytics } from './AnalyticsContext';
+import { PulseLoader } from 'react-spinners';
 
 interface TimeSlotDistributionProps {
   timeSlotDistribution: {
@@ -10,8 +13,52 @@ interface TimeSlotDistributionProps {
   }[];
 }
 
-export function TimeSlotDistribution({ timeSlotDistribution }: TimeSlotDistributionProps) {
-  const { timeRange } = useAnalytics();
+export function TimeSlotDistribution({ timeSlotDistribution: initialDistribution }: TimeSlotDistributionProps) {
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+  const [timeSlotDistribution, setTimeSlotDistribution] = useState(initialDistribution);
+  const [isLoading, setIsLoading] = useState(false);
+  const { refreshTrigger } = useAnalytics();
+  
+  const startDate = getTimeRangeDate(timeRange);
+  
+  useEffect(() => {
+    fetchTimeSlotDistribution();
+  }, [timeRange, refreshTrigger]);
+  
+  async function fetchTimeSlotDistribution() {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('appointment_time')
+        .gte('created_at', startDate.toISOString());
+
+      if (error) throw error;
+
+      const timeSlotCounts: Record<string, number> = {};
+      
+      data?.forEach(booking => {
+        const time = booking.appointment_time;
+        timeSlotCounts[time] = (timeSlotCounts[time] || 0) + 1;
+      });
+
+      const sortedTimeSlots = Object.entries(timeSlotCounts)
+        .map(([time, count]) => ({ time, count }))
+        .sort((a, b) => {
+          const timeA = a.time.split(':').map(Number);
+          const timeB = b.time.split(':').map(Number);
+          return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+        })
+        .slice(0, 10);
+
+      setTimeSlotDistribution(sortedTimeSlots);
+    } catch (error) {
+      console.error('Error fetching time slot distribution:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
@@ -164,20 +211,35 @@ export function TimeSlotDistribution({ timeSlotDistribution }: TimeSlotDistribut
       className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300"
       variants={cardVariants}
     >
-      <h3 className="text-lg font-medium text-gray-800 mb-1">Popular Time Slots</h3>
-      <p className="text-sm text-gray-500 mb-4">{getTimeRangeLabel()} booking distribution</p>
-      <div className="h-64">
-        {timeSlotDistribution.length > 0 ? (
-          <Bar 
-            data={timeSlotChartData} 
-            options={timeSlotChartOptions}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            <p>No time slot data available</p>
-          </div>
-        )}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <h3 className="text-lg font-medium text-gray-800">Popular Time Slots</h3>
+        <TimeRangeSelector 
+          selectedRange={timeRange}
+          onChange={setTimeRange}
+        />
       </div>
+      
+      <p className="text-sm text-gray-500 mb-4">{getTimeRangeLabel()} booking distribution</p>
+      
+      {isLoading ? (
+        <div className="h-64 flex items-center justify-center">
+          <PulseLoader color="#3B82F6" />
+        </div>
+      ) : (
+        <div className="h-64">
+          {timeSlotDistribution.length > 0 ? (
+            <Bar 
+              data={timeSlotChartData} 
+              options={timeSlotChartOptions}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              <p>No time slot data available</p>
+            </div>
+          )}
+        </div>
+      )}
+      
       {timeSlotDistribution.length > 0 && (
         <div className="mt-4">
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 rounded-lg">
