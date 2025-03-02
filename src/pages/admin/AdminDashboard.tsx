@@ -13,8 +13,7 @@ import { RecentBookings } from './components/dashboard/RecentBookings';
 import { SystemStatus } from './components/dashboard/SystemStatus';
 import { DashboardLoader } from './components/dashboard/DashboardLoader';
 import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
-import { RealTimeAnalytics } from './components/dashboard/RealTimeAnalytics';
-import { AdvancedAnalytics } from './components/dashboard/AdvancedAnalytics';
+import { AppointmentInsights } from './components/dashboard/AppointmentInsights';
 
 // Register ChartJS components
 ChartJS.register(
@@ -229,11 +228,8 @@ export default function AdminDashboard() {
       {/* Stats Cards */}
       <StatsCards stats={stats} />
 
-      {/* Real-time Analytics */}
-      <RealTimeAnalytics />
-
-      {/* Advanced Analytics */}
-      <AdvancedAnalytics />
+      {/* New Appointment Insights Component */}
+      <AppointmentInsights />
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
