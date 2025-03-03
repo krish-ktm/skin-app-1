@@ -16,6 +16,7 @@ interface BookingsFiltersProps {
   onClearFilters: () => void;
   onAddBooking: () => void;
   onQuickAddBooking?: () => void;
+  onApplyFilters?: () => void;
 }
 
 export function BookingsFilters({
@@ -29,10 +30,24 @@ export function BookingsFilters({
   onDateRangeChange,
   onClearFilters,
   onAddBooking,
-  onQuickAddBooking
+  onQuickAddBooking,
+  onApplyFilters
 }: BookingsFiltersProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const hasActiveFilters = filters.length > 0 || dateRange.start || dateRange.end;
+  
+  // Local state to track filter changes before applying
+  const [pendingFilters, setPendingFilters] = useState<FilterType[]>(filters);
+  const [pendingDateRange, setPendingDateRange] = useState<DateRange>(dateRange);
+  
+  // Initialize local state when filters prop changes
+  React.useEffect(() => {
+    setPendingFilters(filters);
+  }, [filters]);
+  
+  React.useEffect(() => {
+    setPendingDateRange(dateRange);
+  }, [dateRange]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -41,6 +56,50 @@ export function BookingsFilters({
       month: 'short',
       day: 'numeric'
     });
+  };
+  
+  const handleLocalFilterChange = (field: string, value: string) => {
+    const existingFilterIndex = pendingFilters.findIndex(f => f.field === field);
+    if (existingFilterIndex >= 0) {
+      const newFilters = [...pendingFilters];
+      if (value) {
+        newFilters[existingFilterIndex] = { field, value };
+      } else {
+        newFilters.splice(existingFilterIndex, 1);
+      }
+      setPendingFilters(newFilters);
+    } else if (value) {
+      setPendingFilters([...pendingFilters, { field, value }]);
+    }
+  };
+  
+  const handleLocalDateRangeChange = (range: DateRange) => {
+    setPendingDateRange(range);
+  };
+  
+  const handleApplyFilters = () => {
+    // Apply all pending filters at once
+    pendingFilters.forEach(filter => {
+      onFilterChange(filter.field, filter.value);
+    });
+    
+    // Apply date range
+    onDateRangeChange(pendingDateRange);
+    
+    // Close date picker if open
+    setShowDatePicker(false);
+    
+    // Call the parent's apply filters function if provided
+    if (onApplyFilters) {
+      onApplyFilters();
+    }
+  };
+  
+  const handleClearLocalFilters = () => {
+    setPendingFilters([]);
+    setPendingDateRange({ start: '', end: '' });
+    setShowDatePicker(false);
+    onClearFilters();
   };
 
   return (
@@ -109,8 +168,8 @@ export function BookingsFilters({
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Gender</label>
                 <select
-                  value={filters.find(f => f.field === 'gender')?.value || ''}
-                  onChange={(e) => onFilterChange('gender', e.target.value)}
+                  value={pendingFilters.find(f => f.field === 'gender')?.value || ''}
+                  onChange={(e) => handleLocalFilterChange('gender', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">All</option>
@@ -122,8 +181,8 @@ export function BookingsFilters({
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Status</label>
                 <select
-                  value={filters.find(f => f.field === 'status')?.value || ''}
-                  onChange={(e) => onFilterChange('status', e.target.value)}
+                  value={pendingFilters.find(f => f.field === 'status')?.value || ''}
+                  onChange={(e) => handleLocalFilterChange('status', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">All</option>
@@ -143,11 +202,11 @@ export function BookingsFilters({
                 >
                   <span className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-gray-400" />
-                    {dateRange.start || dateRange.end ? (
+                    {pendingDateRange.start || pendingDateRange.end ? (
                       <span className="text-gray-900">
-                        {dateRange.start ? formatDate(dateRange.start) : 'Start'} 
+                        {pendingDateRange.start ? formatDate(pendingDateRange.start) : 'Start'} 
                         {' - '} 
-                        {dateRange.end ? formatDate(dateRange.end) : 'End'}
+                        {pendingDateRange.end ? formatDate(pendingDateRange.end) : 'End'}
                       </span>
                     ) : (
                       <span className="text-gray-500">Select date range</span>
@@ -173,9 +232,9 @@ export function BookingsFilters({
                           </label>
                           <input
                             type="date"
-                            value={dateRange.start}
-                            onChange={(e) => onDateRangeChange({ ...dateRange, start: e.target.value })}
-                            max={dateRange.end}
+                            value={pendingDateRange.start}
+                            onChange={(e) => handleLocalDateRangeChange({ ...pendingDateRange, start: e.target.value })}
+                            max={pendingDateRange.end}
                             className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
@@ -185,9 +244,9 @@ export function BookingsFilters({
                           </label>
                           <input
                             type="date"
-                            value={dateRange.end}
-                            onChange={(e) => onDateRangeChange({ ...dateRange, end: e.target.value })}
-                            min={dateRange.start}
+                            value={pendingDateRange.end}
+                            onChange={(e) => handleLocalDateRangeChange({ ...pendingDateRange, end: e.target.value })}
+                            min={pendingDateRange.start}
                             className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
@@ -197,8 +256,7 @@ export function BookingsFilters({
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            onDateRangeChange({ start: '', end: '' });
-                            setShowDatePicker(false);
+                            handleLocalDateRangeChange({ start: '', end: '' });
                           }}
                         >
                           Clear
@@ -207,13 +265,28 @@ export function BookingsFilters({
                           size="sm"
                           onClick={() => setShowDatePicker(false)}
                         >
-                          Apply
+                          Done
                         </Button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={handleClearLocalFilters}
+              >
+                Reset
+              </Button>
+              <Button
+                onClick={handleApplyFilters}
+                className="bg-blue-500 hover:bg-blue-600"
+              >
+                Apply Filters
+              </Button>
             </div>
           </motion.div>
         )}

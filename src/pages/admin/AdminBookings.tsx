@@ -38,11 +38,35 @@ export default function AdminBookings() {
     message: string;
   } | null>(null);
   
+  // New state to track if filters should be applied
+  const [shouldApplyFilters, setShouldApplyFilters] = useState(false);
+  
   const itemsPerPage = 100; // Increased from 10 to 100
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, searchTerm, sortField, sortOrder, filters, dateRange]);
+  }, [currentPage, sortField, sortOrder]);
+  
+  // Separate effect for search term with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm) {
+        setCurrentPage(1);
+        fetchBookings();
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
+  // Effect for filters and date range that only runs when shouldApplyFilters is true
+  useEffect(() => {
+    if (shouldApplyFilters) {
+      setCurrentPage(1);
+      fetchBookings();
+      setShouldApplyFilters(false);
+    }
+  }, [shouldApplyFilters]);
 
   async function fetchBookings() {
     try {
@@ -143,7 +167,6 @@ export default function AdminBookings() {
     } else if (value) {
       setFilters([...filters, { field, value }]);
     }
-    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const clearFilters = () => {
@@ -151,6 +174,12 @@ export default function AdminBookings() {
     setDateRange({ start: '', end: '' });
     setSearchTerm('');
     setCurrentPage(1);
+    // Trigger a fetch with cleared filters
+    setShouldApplyFilters(true);
+  };
+  
+  const applyFilters = () => {
+    setShouldApplyFilters(true);
   };
 
   const handleAddBooking = () => {
@@ -334,7 +363,6 @@ export default function AdminBookings() {
         searchTerm={searchTerm}
         onSearchChange={(e) => {
           setSearchTerm(e.target.value);
-          setCurrentPage(1);
         }}
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters(!showFilters)}
@@ -343,11 +371,11 @@ export default function AdminBookings() {
         dateRange={dateRange}
         onDateRangeChange={(range) => {
           setDateRange(range);
-          setCurrentPage(1);
         }}
         onClearFilters={clearFilters}
         onAddBooking={handleAddBooking}
         onQuickAddBooking={handleQuickAddBooking}
+        onApplyFilters={applyFilters}
       />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden relative">
