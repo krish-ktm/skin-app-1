@@ -38,9 +38,6 @@ export default function AdminBookings() {
     message: string;
   } | null>(null);
   
-  // New state to track if filters should be applied
-  const [shouldApplyFilters, setShouldApplyFilters] = useState(false);
-  
   const itemsPerPage = 100; // Increased from 10 to 100
 
   useEffect(() => {
@@ -57,15 +54,6 @@ export default function AdminBookings() {
     
     return () => clearTimeout(timer);
   }, [searchTerm]);
-  
-  // Effect for filters and date range that only runs when shouldApplyFilters is true
-  useEffect(() => {
-    if (shouldApplyFilters) {
-      setCurrentPage(1);
-      fetchBookings();
-      setShouldApplyFilters(false);
-    }
-  }, [shouldApplyFilters]);
 
   async function fetchBookings() {
     try {
@@ -174,17 +162,21 @@ export default function AdminBookings() {
     }
   };
 
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+  };
+
   const clearFilters = () => {
     setFilters([]);
     setDateRange({ start: '', end: '' });
     setSearchTerm('');
     setCurrentPage(1);
-    // Trigger a fetch with cleared filters
-    setShouldApplyFilters(true);
+    fetchBookings();
   };
   
   const applyFilters = () => {
-    setShouldApplyFilters(true);
+    setCurrentPage(1);
+    fetchBookings();
   };
 
   const handleAddBooking = () => {
@@ -288,8 +280,7 @@ export default function AdminBookings() {
         
         // Add the new booking to the list if it belongs on the current page
         if (data && data.length > 0) {
-          const newBooking = data[0] as Booking;
-          setBookings(prevBookings => [newBooking, ...prevBookings]);
+          setBookings(prevBookings => [data[0] as Booking, ...prevBookings]);
         }
         
         showNotification('Booking created successfully', 'success');
@@ -381,9 +372,7 @@ export default function AdminBookings() {
         filters={filters}
         onFilterChange={handleFilterChange}
         dateRange={dateRange}
-        onDateRangeChange={(range) => {
-          setDateRange(range);
-        }}
+        onDateRangeChange={handleDateRangeChange}
         onClearFilters={clearFilters}
         onAddBooking={handleAddBooking}
         onQuickAddBooking={handleQuickAddBooking}
