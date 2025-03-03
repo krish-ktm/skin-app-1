@@ -26,8 +26,7 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
     appointment_date: '',
     appointment_time: '',
     gender: 'male',
-    age: 0,
-    status: 'scheduled'
+    age: 0
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +48,6 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
         appointment_time: '',
         gender: 'male',
         age: 0,
-        status: 'scheduled',
         case_id: nanoid(6).toUpperCase().replace(/[^A-Z0-9]/g, '')
       });
     }
@@ -215,10 +213,6 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
       newErrors.appointment_time = 'Time is required';
     }
     
-    if (!formData.status) {
-      newErrors.status = 'Status is required';
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -235,8 +229,7 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
       // When editing, only include the fields that should be updatable
       const updatedData: Partial<Booking> = {
         appointment_date: formData.appointment_date,
-        appointment_time: formData.appointment_time,
-        status: formData.status as 'scheduled' | 'completed' | 'missed' | 'cancelled'
+        appointment_time: formData.appointment_time
       };
 
       // If it's a new booking, include all fields
@@ -380,25 +373,11 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
                     <CalendarPicker
                       selectedDate={formData.appointment_date || ''}
                       onDateChange={handleDateChange}
+                      minDate={new Date().toISOString().split('T')[0]}
                     />
                     {errors.appointment_date && (
                       <p className="text-sm text-red-600">{errors.appointment_date}</p>
                     )}
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <select
-                      name="status"
-                      value={formData.status || 'scheduled'}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="scheduled">Scheduled</option>
-                      <option value="completed">Completed</option>
-                      <option value="missed">Missed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
                   </div>
                   
                   {booking && (

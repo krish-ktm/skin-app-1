@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, parseISO } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, parseISO, isBefore } from 'date-fns';
 
 interface CalendarPickerProps {
   selectedDate: string;
@@ -64,8 +64,8 @@ export function CalendarPicker({ selectedDate, onDateChange, minDate, maxDate }:
   };
 
   const isDateDisabled = (date: Date) => {
-    if (parsedMinDate && date < parsedMinDate) return true;
-    if (parsedMaxDate && date > parsedMaxDate) return true;
+    if (parsedMinDate && isBefore(date, parsedMinDate)) return true;
+    if (parsedMaxDate && isBefore(parsedMaxDate, date)) return true;
     return false;
   };
 
