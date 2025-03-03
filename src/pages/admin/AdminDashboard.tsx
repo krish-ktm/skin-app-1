@@ -6,15 +6,15 @@ import { format, subDays } from 'date-fns';
 
 // Import dashboard components
 import { StatsCards } from './components/dashboard/StatsCards';
-import { GenderDistribution } from './components/dashboard/GenderDistribution';
+import { AppointmentInsights } from './components/dashboard/AppointmentInsights';
+import { PredictiveForecasting } from './components/dashboard/PredictiveForecasting';
 import { BookingTrend } from './components/dashboard/BookingTrend';
+import { GenderDistribution } from './components/dashboard/GenderDistribution';
+import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
 import { TimeSlotDistribution } from './components/dashboard/TimeSlotDistribution';
 import { RecentBookings } from './components/dashboard/RecentBookings';
 import { SystemStatus } from './components/dashboard/SystemStatus';
 import { DashboardLoader } from './components/dashboard/DashboardLoader';
-import { DayOfWeekAnalytics } from './components/dashboard/DayOfWeekAnalytics';
-import { AppointmentInsights } from './components/dashboard/AppointmentInsights';
-import { PredictiveForecasting } from './components/dashboard/PredictiveForecasting';
 import { AnalyticsProvider } from './components/dashboard/AnalyticsContext';
 
 // Register ChartJS components
@@ -242,26 +242,23 @@ function DashboardContent() {
       {/* Stats Cards */}
       <StatsCards stats={stats} />
 
-      {/* New Appointment Insights Component */}
+      {/* Booking Trend - Moved up as it's more important */}
+      <BookingTrend bookingTrend={bookingTrend} />
+
+      {/* Appointment Insights - High priority */}
       <AppointmentInsights />
 
-      {/* New Predictive Forecasting Component */}
+      {/* Day of Week Analytics - Moved up for better scheduling insights */}
+      <DayOfWeekAnalytics />
+
+      {/* Time Slot Distribution - Important for scheduling */}
+      <TimeSlotDistribution timeSlotDistribution={timeSlotDistribution} />
+
+      {/* Gender Distribution */}
+      <GenderDistribution genderDistribution={genderDistribution} />
+
+      {/* Predictive Forecasting - Moved down as it's more advanced */}
       <PredictiveForecasting />
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gender Distribution */}
-        <GenderDistribution genderDistribution={genderDistribution} />
-
-        {/* Booking Trend */}
-        <BookingTrend bookingTrend={bookingTrend} />
-
-        {/* Popular Time Slots */}
-        <TimeSlotDistribution timeSlotDistribution={timeSlotDistribution} />
-
-        {/* Day of Week Analytics */}
-        <DayOfWeekAnalytics />
-      </div>
 
       {/* Recent Bookings */}
       <RecentBookings recentBookings={recentBookings} />
