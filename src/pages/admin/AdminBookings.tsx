@@ -50,10 +50,8 @@ export default function AdminBookings() {
   // Separate effect for search term with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchTerm) {
-        setCurrentPage(1);
-        fetchBookings();
-      }
+      setCurrentPage(1);
+      fetchBookings();
     }, 500);
     
     return () => clearTimeout(timer);
@@ -326,6 +324,11 @@ export default function AdminBookings() {
     }
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+  };
+
   const showNotification = (message: string, type: 'success' | 'error') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
@@ -361,9 +364,7 @@ export default function AdminBookings() {
 
       <BookingsFilters
         searchTerm={searchTerm}
-        onSearchChange={(e) => {
-          setSearchTerm(e.target.value);
-        }}
+        onSearchChange={handleSearchChange}
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters(!showFilters)}
         filters={filters}
