@@ -50,6 +50,7 @@ export default function AdminBookings() {
   // Separate effect for search term with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Reset to first page when search term changes
       setCurrentPage(1);
       fetchBookings();
     }, 500);
@@ -118,10 +119,16 @@ export default function AdminBookings() {
       setTotalCount(count || 0);
       setTotalPages(Math.ceil((count || 0) / itemsPerPage));
       
+      // Ensure current page is valid based on the total count
+      const validPage = Math.max(1, Math.min(currentPage, Math.ceil((count || 0) / itemsPerPage)));
+      if (validPage !== currentPage) {
+        setCurrentPage(validPage);
+      }
+      
       // Apply sorting and pagination
       query = query
         .order(sortField, { ascending: sortOrder === 'asc' })
-        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
+        .range((validPage - 1) * itemsPerPage, validPage * itemsPerPage - 1);
       
       // Execute the query
       const { data, error } = await query;
