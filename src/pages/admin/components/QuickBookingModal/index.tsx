@@ -46,6 +46,14 @@ export function QuickBookingModal({ isOpen, onClose, onSave }: QuickBookingModal
     }
   }, [isOpen]);
 
+  // Clean up when modal closes
+  useEffect(() => {
+    return () => {
+      // This ensures cleanup when the component unmounts
+      resetForm();
+    };
+  }, []);
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -55,6 +63,12 @@ export function QuickBookingModal({ isOpen, onClose, onSave }: QuickBookingModal
       case_id: nanoid(6).toUpperCase().replace(/[^A-Z0-9]/g, '')
     });
     setErrors({});
+    setIsLoading(false);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   const findNextAvailableSlot = async () => {
@@ -236,11 +250,10 @@ export function QuickBookingModal({ isOpen, onClose, onSave }: QuickBookingModal
     setIsLoading(true);
     try {
       await onSave(formData);
-      onClose();
+      handleClose();
     } catch (error: any) {
       console.error('Error saving booking:', error);
       setErrors({ submit: error.message || 'Failed to save booking' });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -265,7 +278,7 @@ export function QuickBookingModal({ isOpen, onClose, onSave }: QuickBookingModal
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black"
-              onClick={onClose}
+              onClick={handleClose}
             />
 
             {/* Modal */}
@@ -284,7 +297,7 @@ export function QuickBookingModal({ isOpen, onClose, onSave }: QuickBookingModal
                   </span>
                 </div>
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="text-gray-400 hover:text-gray-500"
                 >
                   <X className="h-6 w-6" />
@@ -357,6 +370,7 @@ export function QuickBookingModal({ isOpen, onClose, onSave }: QuickBookingModal
                     <GenderSelect
                       value={formData.gender || 'male'}
                       onChange={handleGenderChange}
+                      disabled={isLoading}
                     />
                     {errors.gender && (
                       <p className="text-sm text-red-600">{errors.gender}</p>
@@ -388,7 +402,7 @@ export function QuickBookingModal({ isOpen, onClose, onSave }: QuickBookingModal
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={onClose}
+                    onClick={handleClose}
                     disabled={isLoading}
                   >
                     Cancel

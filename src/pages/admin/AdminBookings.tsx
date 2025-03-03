@@ -196,6 +196,10 @@ export default function AdminBookings() {
     setShowQuickBookingModal(true);
   };
 
+  const handleCloseQuickBookingModal = () => {
+    setShowQuickBookingModal(false);
+  };
+
   const handleEditBooking = (booking: Booking) => {
     setCurrentBooking(booking);
     setShowBookingModal(true);
@@ -468,7 +472,7 @@ export default function AdminBookings() {
 
       <QuickBookingModal
         isOpen={showQuickBookingModal}
-        onClose={() => setShowQuickBookingModal(false)}
+        onClose={handleCloseQuickBookingModal}
         onSave={handleSaveBooking}
       />
 
