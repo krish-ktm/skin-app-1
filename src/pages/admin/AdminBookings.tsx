@@ -470,11 +470,16 @@ export default function AdminBookings() {
         title={currentBooking ? 'Edit Booking' : 'Add New Booking'}
       />
 
-      <QuickBookingModal
-        isOpen={showQuickBookingModal}
-        onClose={handleCloseQuickBookingModal}
-        onSave={handleSaveBooking}
-      />
+      {/* Use AnimatePresence to properly handle the modal mounting/unmounting */}
+      <AnimatePresence>
+        {showQuickBookingModal && (
+          <QuickBookingModal
+            isOpen={showQuickBookingModal}
+            onClose={handleCloseQuickBookingModal}
+            onSave={handleSaveBooking}
+          />
+        )}
+      </AnimatePresence>
 
       <ConfirmationModal
         isOpen={showDeleteModal}

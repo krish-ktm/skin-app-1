@@ -267,159 +267,159 @@ export function QuickBookingModal({ isOpen, onClose, onSave }: QuickBookingModal
     return `${hour12}:${minutes} ${ampm}`;
   };
 
+  // If the modal is not open, don't render anything
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center px-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black"
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center px-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.5 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black"
+          onClick={handleClose}
+        />
+
+        {/* Modal */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="relative w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-semibold text-gray-900">Quick Booking</h3>
+              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                <Zap className="h-3 w-3" />
+                Next Available Slot
+              </span>
+            </div>
+            <button
               onClick={handleClose}
-            />
-
-            {/* Modal */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl"
+              className="text-gray-400 hover:text-gray-500"
             >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-semibold text-gray-900">Quick Booking</h3>
-                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                    <Zap className="h-3 w-3" />
-                    Next Available Slot
-                  </span>
-                </div>
-                <button
-                  onClick={handleClose}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {errors.submit && (
-                  <div className="p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
-                    {errors.submit}
-                  </div>
-                )}
-                
-                <div className="bg-green-50 p-4 rounded-lg border border-green-100 mb-6">
-                  <h4 className="text-lg font-medium text-green-800 mb-2 flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Next Available Slot
-                  </h4>
-                  
-                  {nextAvailableSlot.isLoading ? (
-                    <div className="flex justify-center py-4">
-                      <PulseLoader size={8} color="#16a34a" />
-                    </div>
-                  ) : nextAvailableSlot.error ? (
-                    <div className="flex items-center gap-2 text-red-600">
-                      <AlertCircle className="h-5 w-5" />
-                      <p>{nextAvailableSlot.error}</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white p-3 rounded-lg border border-green-200">
-                        <p className="text-sm text-gray-600">Date</p>
-                        <p className="text-lg font-semibold text-gray-800">
-                          {format(nextAvailableSlot.date, 'MMMM d, yyyy')}
-                        </p>
-                      </div>
-                      <div className="bg-white p-3 rounded-lg border border-green-200">
-                        <p className="text-sm text-gray-600">Time</p>
-                        <p className="text-lg font-semibold text-gray-800">
-                          {formatTimeSlot(nextAvailableSlot.time)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Name"
-                    name="name"
-                    value={formData.name || ''}
-                    onChange={handleChange}
-                    error={errors.name}
-                    icon={<User className="h-5 w-5" />}
-                    required
-                  />
-                  
-                  <Input
-                    label="Phone"
-                    name="phone"
-                    value={formData.phone || ''}
-                    onChange={handleChange}
-                    error={errors.phone}
-                    icon={<Phone className="h-5 w-5" />}
-                    required
-                  />
-                  
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Gender</label>
-                    <GenderSelect
-                      value={formData.gender || 'male'}
-                      onChange={handleGenderChange}
-                      disabled={isLoading}
-                    />
-                    {errors.gender && (
-                      <p className="text-sm text-red-600">{errors.gender}</p>
-                    )}
-                  </div>
-                  
-                  <Input
-                    label="Age"
-                    type="number"
-                    name="age"
-                    value={formData.age?.toString() || '0'}
-                    onChange={handleChange}
-                    error={errors.age}
-                    icon={<Users className="h-5 w-5" />}
-                    min="0"
-                    required
-                  />
-                  
-                  <Input
-                    label="Case ID (Auto-generated)"
-                    name="case_id"
-                    value={formData.case_id || ''}
-                    readOnly
-                    className="bg-gray-50"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3 mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleClose}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    isLoading={isLoading}
-                    className="bg-green-500 hover:bg-green-600"
-                  >
-                    Quick Book
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
+              <X className="h-6 w-6" />
+            </button>
           </div>
-        </div>
-      )}
-    </AnimatePresence>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {errors.submit && (
+              <div className="p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                {errors.submit}
+              </div>
+            )}
+            
+            <div className="bg-green-50 p-4 rounded-lg border border-green-100 mb-6">
+              <h4 className="text-lg font-medium text-green-800 mb-2 flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Next Available Slot
+              </h4>
+              
+              {nextAvailableSlot.isLoading ? (
+                <div className="flex justify-center py-4">
+                  <PulseLoader size={8} color="#16a34a" />
+                </div>
+              ) : nextAvailableSlot.error ? (
+                <div className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="h-5 w-5" />
+                  <p>{nextAvailableSlot.error}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white p-3 rounded-lg border border-green-200">
+                    <p className="text-sm text-gray-600">Date</p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {format(nextAvailableSlot.date, 'MMMM d, yyyy')}
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border border-green-200">
+                    <p className="text-sm text-gray-600">Time</p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {formatTimeSlot(nextAvailableSlot.time)}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Name"
+                name="name"
+                value={formData.name || ''}
+                onChange={handleChange}
+                error={errors.name}
+                icon={<User className="h-5 w-5" />}
+                required
+              />
+              
+              <Input
+                label="Phone"
+                name="phone"
+                value={formData.phone || ''}
+                onChange={handleChange}
+                error={errors.phone}
+                icon={<Phone className="h-5 w-5" />}
+                required
+              />
+              
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">Gender</label>
+                <GenderSelect
+                  value={formData.gender || 'male'}
+                  onChange={handleGenderChange}
+                  disabled={isLoading}
+                />
+                {errors.gender && (
+                  <p className="text-sm text-red-600">{errors.gender}</p>
+                )}
+              </div>
+              
+              <Input
+                label="Age"
+                type="number"
+                name="age"
+                value={formData.age?.toString() || '0'}
+                onChange={handleChange}
+                error={errors.age}
+                icon={<Users className="h-5 w-5" />}
+                min="0"
+                required
+              />
+              
+              <Input
+                label="Case ID (Auto-generated)"
+                name="case_id"
+                value={formData.case_id || ''}
+                readOnly
+                className="bg-gray-50"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                isLoading={isLoading}
+                className="bg-green-500 hover:bg-green-600"
+              >
+                Quick Book
+              </Button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    </div>
   );
 }
