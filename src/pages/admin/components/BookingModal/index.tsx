@@ -242,7 +242,6 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
       }
 
       await onSave(updatedData);
-      onClose();
     } catch (error: any) {
       console.error('Error saving booking:', error);
       setErrors({ submit: error.message || 'Failed to save booking' });
@@ -251,188 +250,190 @@ export function BookingModal({ isOpen, onClose, onSave, booking, title }: Bookin
     }
   };
 
+  // Handle modal close with cleanup
+  const handleModalClose = () => {
+    // Reset form state
+    setErrors({});
+    // Call the parent's onClose function
+    onClose();
+  };
+
+  // If the modal is not open, don't render anything
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center px-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black"
-              onClick={onClose}
-            />
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center px-4">
+        {/* Backdrop */}
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50"
+          onClick={handleModalClose}
+        />
 
-            {/* Modal */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl"
+        {/* Modal */}
+        <div 
+          className="relative w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+            <button
+              onClick={handleModalClose}
+              className="text-gray-400 hover:text-gray-500"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
+              <X className="h-6 w-6" />
+            </button>
+          </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {errors.submit && (
-                  <div className="p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
-                    {errors.submit}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {errors.submit && (
+              <div className="p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                {errors.submit}
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Read-only fields for user information when editing */}
+              {booking ? (
+                <>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                    <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                      {booking.name}
+                    </div>
                   </div>
-                )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Read-only fields for user information when editing */}
-                  {booking ? (
-                    <>
-                      <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Name</label>
-                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                          {booking.name}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Phone</label>
-                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                          {booking.phone}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Gender</label>
-                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 capitalize">
-                          {booking.gender}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Age</label>
-                        <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                          {booking.age}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <Input
-                        label="Name"
-                        name="name"
-                        value={formData.name || ''}
-                        onChange={handleChange}
-                        error={errors.name}
-                        icon={<User className="h-5 w-5" />}
-                        required
-                      />
-                      
-                      <Input
-                        label="Phone"
-                        name="phone"
-                        value={formData.phone || ''}
-                        onChange={handleChange}
-                        error={errors.phone}
-                        icon={<Phone className="h-5 w-5" />}
-                        required
-                      />
-                      
-                      <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Gender</label>
-                        <GenderSelect
-                          value={formData.gender || 'male'}
-                          onChange={handleGenderChange}
-                        />
-                        {errors.gender && (
-                          <p className="text-sm text-red-600">{errors.gender}</p>
-                        )}
-                      </div>
-                      
-                      <Input
-                        label="Age"
-                        type="number"
-                        name="age"
-                        value={formData.age?.toString() || '0'}
-                        onChange={handleChange}
-                        error={errors.age}
-                        icon={<Users className="h-5 w-5" />}
-                        min="0"
-                        required
-                      />
-                    </>
-                  )}
                   
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Date</label>
-                    <CalendarPicker
-                      selectedDate={formData.appointment_date || ''}
-                      onDateChange={handleDateChange}
-                      minDate={new Date().toISOString().split('T')[0]}
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                      {booking.phone}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Gender</label>
+                    <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 capitalize">
+                      {booking.gender}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Age</label>
+                    <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                      {booking.age}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Input
+                    label="Name"
+                    name="name"
+                    value={formData.name || ''}
+                    onChange={handleChange}
+                    error={errors.name}
+                    icon={<User className="h-5 w-5" />}
+                    required
+                  />
+                  
+                  <Input
+                    label="Phone"
+                    name="phone"
+                    value={formData.phone || ''}
+                    onChange={handleChange}
+                    error={errors.phone}
+                    icon={<Phone className="h-5 w-5" />}
+                    required
+                  />
+                  
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Gender</label>
+                    <GenderSelect
+                      value={formData.gender || 'male'}
+                      onChange={handleGenderChange}
                     />
-                    {errors.appointment_date && (
-                      <p className="text-sm text-red-600">{errors.appointment_date}</p>
+                    {errors.gender && (
+                      <p className="text-sm text-red-600">{errors.gender}</p>
                     )}
                   </div>
                   
-                  {booking && (
-                    <Input
-                      label="Case ID"
-                      name="case_id"
-                      value={formData.case_id || ''}
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                  )}
-                </div>
+                  <Input
+                    label="Age"
+                    type="number"
+                    name="age"
+                    value={formData.age?.toString() || '0'}
+                    onChange={handleChange}
+                    error={errors.age}
+                    icon={<Users className="h-5 w-5" />}
+                    min="0"
+                    required
+                  />
+                </>
+              )}
+              
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">Date</label>
+                <CalendarPicker
+                  selectedDate={formData.appointment_date || ''}
+                  onDateChange={handleDateChange}
+                  minDate={new Date().toISOString().split('T')[0]}
+                />
+                {errors.appointment_date && (
+                  <p className="text-sm text-red-600">{errors.appointment_date}</p>
+                )}
+              </div>
+              
+              {booking && (
+                <Input
+                  label="Case ID"
+                  name="case_id"
+                  value={formData.case_id || ''}
+                  readOnly
+                  className="bg-gray-50"
+                />
+              )}
+            </div>
 
-                {/* Time Slots Selection */}
-                <div className="mt-4">
-                  {formData.appointment_date ? (
-                    <TimeSlots
-                      slots={availableTimeSlots}
-                      selectedTime={formData.appointment_time || ''}
-                      onTimeSelect={handleTimeSelect}
-                      isLoading={isLoadingTimeSlots}
-                      error={timeSlotsError}
-                      isEditing={!!booking}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg">
-                      Please select a date to view available time slots
-                    </div>
-                  )}
-                  {errors.appointment_time && (
-                    <p className="text-sm text-red-600 mt-1">{errors.appointment_time}</p>
-                  )}
+            {/* Time Slots Selection */}
+            <div className="mt-4">
+              {formData.appointment_date ? (
+                <TimeSlots
+                  slots={availableTimeSlots}
+                  selectedTime={formData.appointment_time || ''}
+                  onTimeSelect={handleTimeSelect}
+                  isLoading={isLoadingTimeSlots}
+                  error={timeSlotsError}
+                  isEditing={!!booking}
+                />
+              ) : (
+                <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg">
+                  Please select a date to view available time slots
                 </div>
+              )}
+              {errors.appointment_time && (
+                <p className="text-sm text-red-600 mt-1">{errors.appointment_time}</p>
+              )}
+            </div>
 
-                <div className="flex justify-end gap-3 mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onClose}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    isLoading={isLoading}
-                  >
-                    {booking ? 'Update Booking' : 'Create Booking'}
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleModalClose}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                isLoading={isLoading}
+              >
+                {booking ? 'Update Booking' : 'Create Booking'}
+              </Button>
+            </div>
+          </form>
         </div>
-      )}
-    </AnimatePresence>
+      </div>
+    </div>
   );
 }
