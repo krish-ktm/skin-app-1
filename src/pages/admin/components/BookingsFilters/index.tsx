@@ -3,6 +3,7 @@ import { Search, Filter, X, Calendar, Plus, Zap } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import type { DateRange, Filter as FilterType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format, addDays, subDays, isValid } from 'date-fns';
 
 interface BookingsFiltersProps {
   searchTerm: string;
@@ -34,14 +35,58 @@ export function BookingsFilters({
   onApplyFilters
 }: BookingsFiltersProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [localDateRange, setLocalDateRange] = useState(dateRange);
+  const [error, setError] = useState<string | null>(null);
   
-  const formatDate = (dateStr: string) => {
+  useEffect(() => {
+    setLocalDateRange(dateRange);
+  }, [dateRange]);
+
+  const handleDateChange = (field: 'start' | 'end', value: string) => {
+    setError(null);
+    const newRange = { ...localDateRange, [field]: value };
+    
+    // Validate dates
+    if (newRange.start && newRange.end) {
+      const startDate = new Date(newRange.start);
+      const endDate = new Date(newRange.end);
+      
+      if (!isValid(startDate) || !isValid(endDate)) {
+        setError('Invalid date format');
+        return;
+      }
+      
+      if (startDate > endDate) {
+        setError('Start date cannot be after end date');
+        return;
+      }
+    }
+    
+    setLocalDateRange(newRange);
+  };
+
+  const handleApplyDateRange = () => {
+    if (!error) {
+      onDateRangeChange(localDateRange);
+      setShowDatePicker(false);
+    }
+  };
+
+  const handleQuickSelect = (days: number) => {
+    const end = new Date();
+    const start = subDays(end, days - 1);
+    const newRange = {
+      start: format(start, 'yyyy-MM-dd'),
+      end: format(end, 'yyyy-MM-dd')
+    };
+    setLocalDateRange(newRange);
+    onDateRangeChange(newRange);
+    setShowDatePicker(false);
+  };
+
+  const formatDisplayDate = (dateStr: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return format(new Date(dateStr), 'MMM dd, yyyy');
   };
 
   return (
@@ -146,9 +191,9 @@ export function BookingsFilters({
                     <Calendar className="h-5 w-5 text-gray-400" />
                     {dateRange.start || dateRange.end ? (
                       <span className="text-gray-900">
-                        {dateRange.start ? formatDate(dateRange.start) : 'Start'} 
+                        {dateRange.start ? formatDisplayDate(dateRange.start) : 'Start'} 
                         {' - '} 
-                        {dateRange.end ? formatDate(dateRange.end) : 'End'}
+                        {dateRange.end ? formatDisplayDate(dateRange.end) : 'End'}
                       </span>
                     ) : (
                       <span className="text-gray-500">Select date range</span>
@@ -167,48 +212,82 @@ export function BookingsFilters({
                       exit={{ opacity: 0, y: -10 }}
                       className="absolute top-full left-0 right-0 mt-2 p-4 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
                     >
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-600">
-                            Start Date
-                          </label>
-                          <input
-                            type="date"
-                            value={dateRange.start}
-                            onChange={(e) => onDateRangeChange({ ...dateRange, start: e.target.value })}
-                            max={dateRange.end}
-                            className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                      <div className="space-y-4">
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleQuickSelect(7)}
+                          >
+                            Last 7 days
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleQuickSelect(30)}
+                          >
+                            Last 30 days
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleQuickSelect(90)}
+                          >
+                            Last 90 days
+                          </Button>
                         </div>
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-600">
-                            End Date
-                          </label>
-                          <input
-                            type="date"
-                            value={dateRange.end}
-                            onChange={(e) => onDateRangeChange({ ...dateRange, end: e.target.value })}
-                            min={dateRange.start}
-                            className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-600">
+                              Start Date
+                            </label>
+                            <input
+                              type="date"
+                              value={localDateRange.start}
+                              onChange={(e) => handleDateChange('start', e.target.value)}
+                              max={localDateRange.end}
+                              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-600">
+                              End Date
+                            </label>
+                            <input
+                              type="date"
+                              value={localDateRange.end}
+                              onChange={(e) => handleDateChange('end', e.target.value)}
+                              min={localDateRange.start}
+                              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex justify-end mt-4 gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            onDateRangeChange({ start: '', end: '' });
-                          }}
-                        >
-                          Clear
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => setShowDatePicker(false)}
-                        >
-                          Done
-                        </Button>
+
+                        {error && (
+                          <p className="text-sm text-red-600 mt-2">{error}</p>
+                        )}
+
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setLocalDateRange({ start: '', end: '' });
+                              onDateRangeChange({ start: '', end: '' });
+                              setShowDatePicker(false);
+                            }}
+                          >
+                            Clear
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleApplyDateRange}
+                            disabled={!!error}
+                          >
+                            Apply
+                          </Button>
+                        </div>
                       </div>
                     </motion.div>
                   )}
