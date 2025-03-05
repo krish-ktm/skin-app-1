@@ -4,7 +4,7 @@ import AppointmentPage from './pages/appointments/AppointmentPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminBookings from './pages/admin/AdminBookings';
+import AdminBookings from './pages/admin/components/AdminBookings';
 import AdminTimeSlots from './pages/admin/AdminTimeSlots';
 import AdminUsers from './pages/admin/AdminUsers';
 import { AdminAuthProvider, useAdminAuth } from './contexts/AdminAuthContext';
@@ -46,4 +46,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
