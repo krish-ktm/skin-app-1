@@ -64,6 +64,14 @@ export function useAdminBookings() {
         if (filter.value) {
           if (filter.field === 'gender' || filter.field === 'status') {
             query = query.eq(filter.field, filter.value.toLowerCase());
+          } else if (filter.field === 'age_range') {
+            const [min, max] = filter.value.split('-').map(Number);
+            if (max) {
+              query = query.gte('age', min).lte('age', max);
+            } else {
+              // Handle 61+ case
+              query = query.gte('age', min);
+            }
           } else {
             query = query.ilike(filter.field, `%${filter.value}%`);
           }

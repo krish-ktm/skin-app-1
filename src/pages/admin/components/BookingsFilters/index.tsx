@@ -21,6 +21,15 @@ interface BookingsFiltersProps {
   onClearFilters: () => void;
 }
 
+const AGE_RANGES = [
+  { label: 'All Ages', value: '' },
+  { label: '0-18', value: '0-18' },
+  { label: '19-30', value: '19-30' },
+  { label: '31-45', value: '31-45' },
+  { label: '46-60', value: '46-60' },
+  { label: '61+', value: '61+' }
+];
+
 export function BookingsFilters({
   searchTerm,
   onSearchChange,
@@ -166,6 +175,21 @@ export function BookingsFilters({
                   <option value="completed">Completed</option>
                   <option value="missed">Missed</option>
                   <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Age Range</label>
+                <select
+                  value={filters.find(f => f.field === 'age_range')?.value || ''}
+                  onChange={(e) => onFilterChange('age_range', e.target.value)}
+                  className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
+                >
+                  {AGE_RANGES.map(range => (
+                    <option key={range.value} value={range.value}>
+                      {range.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
