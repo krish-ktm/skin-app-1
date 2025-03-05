@@ -46,7 +46,8 @@ export default function AdminBookings() {
     setShowDeleteModal,
     setShowFilters,
     setCurrentPage,
-    applyFilters
+    applyFilters,
+    clearFilters
   } = useAdminBookings();
 
   return (
@@ -65,6 +66,7 @@ export default function AdminBookings() {
         onAddBooking={handleAddBooking}
         onQuickAddBooking={handleQuickAddBooking}
         onApplyFilters={applyFilters}
+        onClearFilters={clearFilters}
       />
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden relative">

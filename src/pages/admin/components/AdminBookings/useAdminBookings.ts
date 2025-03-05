@@ -137,6 +137,42 @@ export function useAdminBookings() {
     setDateRange(range);
   };
 
+  const clearFilters = async () => {
+    setIsLoading(true);
+    setActionInProgress({ type: 'fetch', message: 'Resetting filters...' });
+    
+    try {
+      // Reset all filter states
+      setSearchTerm('');
+      setFilters([]);
+      setDateRange({ start: '', end: '' });
+      setCurrentPage(1);
+      setSortField('appointment_date');
+      setSortOrder('desc');
+      
+      // Fetch fresh data with no filters
+      const { data, error, count } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact' })
+        .order('appointment_date', { ascending: false })
+        .range(0, itemsPerPage - 1);
+      
+      if (error) throw error;
+      
+      setBookings(data || []);
+      setTotalCount(count || 0);
+      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
+      
+      showNotification('Filters cleared successfully', 'success');
+    } catch (error) {
+      console.error('Error clearing filters:', error);
+      showNotification('Failed to clear filters', 'error');
+    } finally {
+      setIsLoading(false);
+      setActionInProgress(null);
+    }
+  };
+
   const applyFilters = () => {
     setCurrentPage(1);
     fetchBookings();
@@ -311,6 +347,7 @@ export function useAdminBookings() {
     setShowDeleteModal,
     setShowFilters,
     setCurrentPage,
-    applyFilters
+    applyFilters,
+    clearFilters
   };
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Plus, Zap } from 'lucide-react';
+import { Search, Filter, Calendar, Plus, Zap, RotateCcw } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import type { DateRange, Filter as FilterType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +17,7 @@ interface BookingsFiltersProps {
   onAddBooking: () => void;
   onQuickAddBooking?: () => void;
   onApplyFilters: () => void;
+  onClearFilters: () => void;
 }
 
 export function BookingsFilters({
@@ -30,7 +31,8 @@ export function BookingsFilters({
   onDateRangeChange,
   onAddBooking,
   onQuickAddBooking,
-  onApplyFilters
+  onApplyFilters,
+  onClearFilters
 }: BookingsFiltersProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localDateRange, setLocalDateRange] = useState(dateRange);
@@ -87,6 +89,8 @@ export function BookingsFilters({
     return format(new Date(dateStr), 'MMM dd, yyyy');
   };
 
+  const hasActiveFilters = searchTerm || filters.length > 0 || dateRange.start || dateRange.end;
+
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -102,13 +106,25 @@ export function BookingsFilters({
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
-          <Button
-            onClick={onToggleFilters}
-            variant="outline"
-            icon={<Filter className="h-5 w-5" />}
-          >
-            Filters
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={onToggleFilters}
+              variant="outline"
+              icon={<Filter className="h-5 w-5" />}
+            >
+              Filters
+            </Button>
+            {hasActiveFilters && (
+              <Button
+                onClick={onClearFilters}
+                variant="outline"
+                icon={<RotateCcw className="h-5 w-5" />}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                Clear
+              </Button>
+            )}
+          </div>
           <div className="flex gap-2">
             {onQuickAddBooking && (
               <Button
