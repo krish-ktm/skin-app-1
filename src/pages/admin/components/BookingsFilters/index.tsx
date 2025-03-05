@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Plus, Zap, RotateCcw, ChevronDown } from 'lucide-react';
+import { Search, Filter, Calendar, Plus, Zap, RotateCcw, ChevronDown, Users } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { DateRangePicker } from '../../../../components/ui/DateRangePicker';
 import type { DateRange, Filter as FilterType } from '../../types';
@@ -22,12 +22,12 @@ interface BookingsFiltersProps {
 }
 
 const AGE_RANGES = [
-  { label: 'All Ages', value: '' },
-  { label: '0-18', value: '0-18' },
-  { label: '19-30', value: '19-30' },
-  { label: '31-45', value: '31-45' },
-  { label: '46-60', value: '46-60' },
-  { label: '61+', value: '61+' }
+  { label: 'All Ages', value: '', color: 'bg-gray-100 text-gray-700 border-gray-200' },
+  { label: 'Youth (0-18)', value: '0-18', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { label: 'Young Adult (19-30)', value: '19-30', color: 'bg-green-50 text-green-700 border-green-200' },
+  { label: 'Adult (31-45)', value: '31-45', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { label: 'Middle Age (46-60)', value: '46-60', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { label: 'Senior (61+)', value: '61+', color: 'bg-red-50 text-red-700 border-red-200' }
 ];
 
 export function BookingsFilters({
@@ -46,6 +46,7 @@ export function BookingsFilters({
 }: BookingsFiltersProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localDateRange, setLocalDateRange] = useState(dateRange);
+  const [showAgeRanges, setShowAgeRanges] = useState(false);
   
   useEffect(() => {
     setLocalDateRange(dateRange);
@@ -81,6 +82,7 @@ export function BookingsFilters({
   };
 
   const hasActiveFilters = searchTerm || filters.length > 0 || dateRange.start || dateRange.end;
+  const selectedAgeRange = filters.find(f => f.field === 'age_range')?.value || '';
 
   return (
     <>
@@ -180,17 +182,59 @@ export function BookingsFilters({
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Age Range</label>
-                <select
-                  value={filters.find(f => f.field === 'age_range')?.value || ''}
-                  onChange={(e) => onFilterChange('age_range', e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
-                >
-                  {AGE_RANGES.map(range => (
-                    <option key={range.value} value={range.value}>
-                      {range.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowAgeRanges(!showAgeRanges)}
+                    className={`
+                      w-full px-4 py-2.5 rounded-xl border text-left
+                      flex items-center justify-between
+                      transition-colors duration-200
+                      ${selectedAgeRange 
+                        ? AGE_RANGES.find(r => r.value === selectedAgeRange)?.color
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }
+                    `}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      {AGE_RANGES.find(r => r.value === selectedAgeRange)?.label || 'Select age range'}
+                    </span>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${showAgeRanges ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showAgeRanges && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-10 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+                      >
+                        {AGE_RANGES.map((range) => (
+                          <button
+                            key={range.value}
+                            type="button"
+                            onClick={() => {
+                              onFilterChange('age_range', range.value);
+                              setShowAgeRanges(false);
+                            }}
+                            className={`
+                              w-full px-4 py-3 text-left flex items-center gap-3
+                              transition-colors duration-200
+                              ${range.value === selectedAgeRange ? range.color : 'hover:bg-gray-50'}
+                            `}
+                          >
+                            <Users className={`h-5 w-5 ${range.value === selectedAgeRange ? '' : 'text-gray-400'}`} />
+                            <span className={range.value === selectedAgeRange ? 'font-medium' : ''}>
+                              {range.label}
+                            </span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               <div className="relative space-y-2 col-span-2">
