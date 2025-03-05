@@ -137,14 +137,6 @@ export function useAdminBookings() {
     setDateRange(range);
   };
 
-  const clearFilters = () => {
-    setFilters([]);
-    setDateRange({ start: '', end: '' });
-    setSearchTerm('');
-    setCurrentPage(1);
-    fetchBookings();
-  };
-
   const applyFilters = () => {
     setCurrentPage(1);
     fetchBookings();
@@ -306,7 +298,6 @@ export function useAdminBookings() {
     handleSort,
     handleFilterChange,
     handleDateRangeChange,
-    clearFilters,
     handleAddBooking,
     handleQuickAddBooking,
     handleCloseQuickBookingModal,

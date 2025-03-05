@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, X, Calendar, Plus, Zap } from 'lucide-react';
+import { Search, Filter, Calendar, Plus, Zap } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import type { DateRange, Filter as FilterType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +14,6 @@ interface BookingsFiltersProps {
   onFilterChange: (field: string, value: string) => void;
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
-  onClearFilters: () => void;
   onAddBooking: () => void;
   onQuickAddBooking?: () => void;
   onApplyFilters: () => void;
@@ -29,7 +28,6 @@ export function BookingsFilters({
   onFilterChange,
   dateRange,
   onDateRangeChange,
-  onClearFilters,
   onAddBooking,
   onQuickAddBooking,
   onApplyFilters
@@ -130,16 +128,6 @@ export function BookingsFilters({
               Add Booking
             </Button>
           </div>
-          {(filters.length > 0 || dateRange.start || dateRange.end) && (
-            <Button
-              onClick={onClearFilters}
-              variant="outline"
-              icon={<X className="h-5 w-5" />}
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              Clear
-            </Button>
-          )}
         </div>
       </div>
 
@@ -199,9 +187,6 @@ export function BookingsFilters({
                       <span className="text-gray-500">Select date range</span>
                     )}
                   </span>
-                  <X 
-                    className={`h-4 w-4 text-gray-400 transition-transform ${showDatePicker ? 'rotate-180' : ''}`}
-                  />
                 </button>
 
                 <AnimatePresence>
@@ -270,17 +255,6 @@ export function BookingsFilters({
 
                         <div className="flex justify-end gap-2">
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setLocalDateRange({ start: '', end: '' });
-                              onDateRangeChange({ start: '', end: '' });
-                              setShowDatePicker(false);
-                            }}
-                          >
-                            Clear
-                          </Button>
-                          <Button
                             size="sm"
                             onClick={handleApplyDateRange}
                             disabled={!!error}
@@ -295,13 +269,7 @@ export function BookingsFilters({
               </div>
             </div>
             
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={onClearFilters}
-              >
-                Reset
-              </Button>
+            <div className="flex justify-end">
               <Button
                 onClick={onApplyFilters}
                 className="bg-blue-500 hover:bg-blue-600"

@@ -33,7 +33,6 @@ export default function AdminBookings() {
     handleSort,
     handleFilterChange,
     handleDateRangeChange,
-    clearFilters,
     handleAddBooking,
     handleQuickAddBooking,
     handleCloseQuickBookingModal,
@@ -63,7 +62,6 @@ export default function AdminBookings() {
         onFilterChange={handleFilterChange}
         dateRange={dateRange}
         onDateRangeChange={handleDateRangeChange}
-        onClearFilters={clearFilters}
         onAddBooking={handleAddBooking}
         onQuickAddBooking={handleQuickAddBooking}
         onApplyFilters={applyFilters}
