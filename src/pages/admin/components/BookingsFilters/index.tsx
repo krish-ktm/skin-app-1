@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Calendar, Plus, Zap, RotateCcw, ChevronDown } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
+import { DateRangePicker } from '../../../../components/ui/DateRangePicker';
 import type { DateRange, Filter as FilterType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, addDays, subDays, isValid } from 'date-fns';
+import { format } from 'date-fns';
 
 interface BookingsFiltersProps {
   searchTerm: string;
@@ -36,48 +37,30 @@ export function BookingsFilters({
 }: BookingsFiltersProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localDateRange, setLocalDateRange] = useState(dateRange);
-  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     setLocalDateRange(dateRange);
   }, [dateRange]);
 
-  const handleDateChange = (field: 'start' | 'end', value: string) => {
-    setError(null);
-    const newRange = { ...localDateRange, [field]: value };
-    
-    if (newRange.start && newRange.end) {
-      const startDate = new Date(newRange.start);
-      const endDate = new Date(newRange.end);
-      
-      if (!isValid(startDate) || !isValid(endDate)) {
-        setError('Invalid date format');
-        return;
-      }
-      
-      if (startDate > endDate) {
-        setError('Start date cannot be after end date');
-        return;
-      }
-    }
-    
-    setLocalDateRange(newRange);
+  const handleDateRangeChange = (range: DateRange) => {
+    setLocalDateRange(range);
   };
 
   const handleApplyDateRange = () => {
-    if (!error) {
-      onDateRangeChange(localDateRange);
-      setShowDatePicker(false);
-    }
+    onDateRangeChange(localDateRange);
+    setShowDatePicker(false);
   };
 
   const handleQuickSelect = (days: number) => {
     const end = new Date();
-    const start = subDays(end, days - 1);
+    const start = new Date();
+    start.setDate(end.getDate() - days + 1);
+    
     const newRange = {
       start: format(start, 'yyyy-MM-dd'),
       end: format(end, 'yyyy-MM-dd')
     };
+    
     setLocalDateRange(newRange);
     onDateRangeChange(newRange);
     setShowDatePicker(false);
@@ -214,10 +197,10 @@ export function BookingsFilters({
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 right-0 mt-2 p-6 bg-white rounded-xl shadow-xl border border-gray-200 z-10"
+                      className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-10"
                     >
-                      <div className="space-y-6">
-                        <div className="flex gap-3 overflow-x-auto pb-2">
+                      <div className="p-4">
+                        <div className="flex gap-3 mb-4 overflow-x-auto">
                           <Button
                             size="sm"
                             variant="outline"
@@ -244,38 +227,12 @@ export function BookingsFilters({
                           </Button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-600">
-                              Start Date
-                            </label>
-                            <input
-                              type="date"
-                              value={localDateRange.start}
-                              onChange={(e) => handleDateChange('start', e.target.value)}
-                              max={localDateRange.end}
-                              className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-600">
-                              End Date
-                            </label>
-                            <input
-                              type="date"
-                              value={localDateRange.end}
-                              onChange={(e) => handleDateChange('end', e.target.value)}
-                              min={localDateRange.start}
-                              className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
-                            />
-                          </div>
-                        </div>
+                        <DateRangePicker
+                          dateRange={localDateRange}
+                          onDateRangeChange={handleDateRangeChange}
+                        />
 
-                        {error && (
-                          <p className="text-sm text-red-600 mt-2">{error}</p>
-                        )}
-
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 mt-4">
                           <Button
                             size="sm"
                             variant="outline"
@@ -287,7 +244,6 @@ export function BookingsFilters({
                           <Button
                             size="sm"
                             onClick={handleApplyDateRange}
-                            disabled={!!error}
                             className="rounded-xl"
                           >
                             Apply
