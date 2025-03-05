@@ -1,12 +1,12 @@
 // Calendar Constants
-export const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-export const MONTHS = [
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
 // Time Slots
-export const BUSINESS_HOURS = {
+const BUSINESS_HOURS = {
   start: 9, // 9 AM
   end: 23, // 5 PM
 };

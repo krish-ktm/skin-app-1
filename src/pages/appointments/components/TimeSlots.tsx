@@ -3,7 +3,7 @@ import { Clock, AlertCircle } from 'lucide-react';
 import { PulseLoader } from 'react-spinners';
 import { formatTimeSlot } from '../../../utils/date';
 
-export interface TimeSlot {
+interface TimeSlot {
   time: string;
   available: boolean;
   bookingCount?: number;
