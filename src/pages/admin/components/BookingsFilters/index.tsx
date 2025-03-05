@@ -75,7 +75,7 @@ export function BookingsFilters({
             exit={{ opacity: 0, y: -10 }}
             className="bg-white p-6 rounded-xl border border-gray-200 shadow-lg space-y-6 mb-6"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               <FilterDropdown
                 label="Gender"
                 options={GENDER_OPTIONS}
@@ -120,7 +120,9 @@ export function BookingsFilters({
                 placeholder="Select time"
                 maxHeight="240px"
               />
+            </div>
 
+            <div className="pt-4 border-t border-gray-200">
               <DateRangeFilter
                 dateRange={dateRange}
                 onDateRangeChange={onDateRangeChange}
