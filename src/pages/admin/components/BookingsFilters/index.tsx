@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Plus, Zap, RotateCcw, ChevronDown, Users } from 'lucide-react';
+import { Search, Filter, Calendar, Plus, Zap, RotateCcw, ChevronDown, Users, Scale as Male, Activity } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { DateRangePicker } from '../../../../components/ui/DateRangePicker';
 import type { DateRange, Filter as FilterType } from '../../types';
@@ -22,12 +22,26 @@ interface BookingsFiltersProps {
 }
 
 const AGE_RANGES = [
-  { label: 'All Ages', value: '', color: 'bg-gray-100 text-gray-700 border-gray-200' },
-  { label: 'Youth (0-18)', value: '0-18', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { label: 'Young Adult (19-30)', value: '19-30', color: 'bg-green-50 text-green-700 border-green-200' },
-  { label: 'Adult (31-45)', value: '31-45', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { label: 'Middle Age (46-60)', value: '46-60', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { label: 'Senior (61+)', value: '61+', color: 'bg-red-50 text-red-700 border-red-200' }
+  { label: 'All Ages', value: '' },
+  { label: '0-18', value: '0-18' },
+  { label: '19-30', value: '19-30' },
+  { label: '31-45', value: '31-45' },
+  { label: '46-60', value: '46-60' },
+  { label: '61+', value: '61+' }
+];
+
+const GENDER_OPTIONS = [
+  { label: 'All Genders', value: '' },
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' }
+];
+
+const STATUS_OPTIONS = [
+  { label: 'All Statuses', value: '' },
+  { label: 'Scheduled', value: 'scheduled' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Missed', value: 'missed' },
+  { label: 'Cancelled', value: 'cancelled' }
 ];
 
 export function BookingsFilters({
@@ -47,6 +61,8 @@ export function BookingsFilters({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [localDateRange, setLocalDateRange] = useState(dateRange);
   const [showAgeRanges, setShowAgeRanges] = useState(false);
+  const [showGenderOptions, setShowGenderOptions] = useState(false);
+  const [showStatusOptions, setShowStatusOptions] = useState(false);
   
   useEffect(() => {
     setLocalDateRange(dateRange);
@@ -83,6 +99,8 @@ export function BookingsFilters({
 
   const hasActiveFilters = searchTerm || filters.length > 0 || dateRange.start || dateRange.end;
   const selectedAgeRange = filters.find(f => f.field === 'age_range')?.value || '';
+  const selectedGender = filters.find(f => f.field === 'gender')?.value || '';
+  const selectedStatus = filters.find(f => f.field === 'status')?.value || '';
 
   return (
     <>
@@ -154,30 +172,96 @@ export function BookingsFilters({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Gender</label>
-                <select
-                  value={filters.find(f => f.field === 'gender')?.value || ''}
-                  onChange={(e) => onFilterChange('gender', e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
-                >
-                  <option value="">All</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowGenderOptions(!showGenderOptions)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-left bg-white hover:bg-gray-50 flex items-center justify-between transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Male className="h-5 w-5 text-gray-400" />
+                      {GENDER_OPTIONS.find(g => g.value === selectedGender)?.label || 'Select gender'}
+                    </span>
+                    <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${showGenderOptions ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showGenderOptions && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-10 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+                      >
+                        {GENDER_OPTIONS.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              onFilterChange('gender', option.value);
+                              setShowGenderOptions(false);
+                            }}
+                            className={`
+                              w-full px-4 py-3 text-left flex items-center gap-3
+                              transition-colors duration-200 hover:bg-gray-50
+                              ${option.value === selectedGender ? 'bg-gray-50 font-medium' : ''}
+                            `}
+                          >
+                            <Male className={`h-5 w-5 ${option.value === selectedGender ? 'text-gray-700' : 'text-gray-400'}`} />
+                            <span>{option.label}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Status</label>
-                <select
-                  value={filters.find(f => f.field === 'status')?.value || ''}
-                  onChange={(e) => onFilterChange('status', e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
-                >
-                  <option value="">All</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="completed">Completed</option>
-                  <option value="missed">Missed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowStatusOptions(!showStatusOptions)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-left bg-white hover:bg-gray-50 flex items-center justify-between transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-gray-400" />
+                      {STATUS_OPTIONS.find(s => s.value === selectedStatus)?.label || 'Select status'}
+                    </span>
+                    <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${showStatusOptions ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showStatusOptions && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-10 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+                      >
+                        {STATUS_OPTIONS.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              onFilterChange('status', option.value);
+                              setShowStatusOptions(false);
+                            }}
+                            className={`
+                              w-full px-4 py-3 text-left flex items-center gap-3
+                              transition-colors duration-200 hover:bg-gray-50
+                              ${option.value === selectedStatus ? 'bg-gray-50 font-medium' : ''}
+                            `}
+                          >
+                            <Activity className={`h-5 w-5 ${option.value === selectedStatus ? 'text-gray-700' : 'text-gray-400'}`} />
+                            <span>{option.label}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -186,21 +270,13 @@ export function BookingsFilters({
                   <button
                     type="button"
                     onClick={() => setShowAgeRanges(!showAgeRanges)}
-                    className={`
-                      w-full px-4 py-2.5 rounded-xl border text-left
-                      flex items-center justify-between
-                      transition-colors duration-200
-                      ${selectedAgeRange 
-                        ? AGE_RANGES.find(r => r.value === selectedAgeRange)?.color
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }
-                    `}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-left bg-white hover:bg-gray-50 flex items-center justify-between transition-colors"
                   >
                     <span className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
+                      <Users className="h-5 w-5 text-gray-400" />
                       {AGE_RANGES.find(r => r.value === selectedAgeRange)?.label || 'Select age range'}
                     </span>
-                    <ChevronDown className={`h-5 w-5 transition-transform ${showAgeRanges ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${showAgeRanges ? 'rotate-180' : ''}`} />
                   </button>
 
                   <AnimatePresence>
@@ -221,14 +297,12 @@ export function BookingsFilters({
                             }}
                             className={`
                               w-full px-4 py-3 text-left flex items-center gap-3
-                              transition-colors duration-200
-                              ${range.value === selectedAgeRange ? range.color : 'hover:bg-gray-50'}
+                              transition-colors duration-200 hover:bg-gray-50
+                              ${range.value === selectedAgeRange ? 'bg-gray-50 font-medium' : ''}
                             `}
                           >
-                            <Users className={`h-5 w-5 ${range.value === selectedAgeRange ? '' : 'text-gray-400'}`} />
-                            <span className={range.value === selectedAgeRange ? 'font-medium' : ''}>
-                              {range.label}
-                            </span>
+                            <Users className={`h-5 w-5 ${range.value === selectedAgeRange ? 'text-gray-700' : 'text-gray-400'}`} />
+                            <span>{range.label}</span>
                           </button>
                         ))}
                       </motion.div>
