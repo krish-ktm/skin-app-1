@@ -15,6 +15,7 @@ interface Appointment {
   gender: string;
   age: number;
   case_id: string;
+  status: 'scheduled' | 'completed' | 'missed' | 'cancelled';
   current_appointment?: {
     id: string;
     status: 'waiting' | 'in_progress' | 'completed';
@@ -72,6 +73,7 @@ export default function ReceptionistPage() {
           )
         `)
         .eq('appointment_date', today)
+        .eq('status', 'scheduled')
         .order('appointment_time', { ascending: true });
 
       if (error) throw error;
@@ -99,7 +101,7 @@ export default function ReceptionistPage() {
           throw new Error('Another appointment is already in progress');
         }
 
-        // Start the appointment
+        // Create new current appointment entry
         const { error } = await supabase
           .from('current_appointments')
           .insert({
@@ -110,7 +112,7 @@ export default function ReceptionistPage() {
 
         if (error) throw error;
       } else {
-        // Complete the appointment
+        // Complete the current appointment
         const { error } = await supabase
           .from('current_appointments')
           .update({
@@ -147,6 +149,9 @@ export default function ReceptionistPage() {
     );
   }
 
+  const currentAppointment = appointments.find(apt => apt.current_appointment?.status === 'in_progress');
+  const waitingAppointments = appointments.filter(apt => !apt.current_appointment);
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
@@ -172,50 +177,43 @@ export default function ReceptionistPage() {
             Current Appointment
           </h3>
           
-          {appointments.find(apt => apt.current_appointment?.status === 'in_progress') ? (
-            appointments
-              .filter(apt => apt.current_appointment?.status === 'in_progress')
-              .map(appointment => (
-                <div
-                  key={appointment.id}
-                  className="bg-white p-4 rounded-lg shadow-sm border border-blue-200"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{appointment.name}</h4>
-                      <p className="text-sm text-gray-600">Case ID: {appointment.case_id}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                        In Progress
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Time</p>
-                      <p className="font-medium">{formatTimeSlot(appointment.appointment_time)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Started At</p>
-                      <p className="font-medium">
-                        {appointment.current_appointment?.started_at
-                          ? format(new Date(appointment.current_appointment.started_at), 'hh:mm a')
-                          : 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    onClick={() => handleStatusChange(appointment, 'complete')}
-                    isLoading={actionInProgress === appointment.id}
-                    className="w-full bg-green-500 hover:bg-green-600"
-                  >
-                    Complete Appointment
-                  </Button>
+          {currentAppointment ? (
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-blue-200">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h4 className="font-semibold text-gray-900">{currentAppointment.name}</h4>
+                  <p className="text-sm text-gray-600">Case ID: {currentAppointment.case_id}</p>
                 </div>
-              ))
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    In Progress
+                  </span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-sm text-gray-600">Time</p>
+                  <p className="font-medium">{formatTimeSlot(currentAppointment.appointment_time)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Started At</p>
+                  <p className="font-medium">
+                    {currentAppointment.current_appointment?.started_at
+                      ? format(new Date(currentAppointment.current_appointment.started_at), 'hh:mm a')
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
+              
+              <Button
+                onClick={() => handleStatusChange(currentAppointment, 'complete')}
+                isLoading={actionInProgress === currentAppointment.id}
+                className="w-full bg-green-500 hover:bg-green-600"
+              >
+                Complete Appointment
+              </Button>
+            </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
               <UserCheck className="h-12 w-12 mx-auto mb-3 text-gray-400" />
@@ -232,49 +230,47 @@ export default function ReceptionistPage() {
           </h3>
           
           <div className="space-y-4">
-            {appointments
-              .filter(apt => !apt.current_appointment || apt.current_appointment.status === 'waiting')
-              .map(appointment => (
-                <div
-                  key={appointment.id}
-                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:border-blue-200 transition-colors"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{appointment.name}</h4>
-                      <p className="text-sm text-gray-600">Case ID: {appointment.case_id}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        {formatTimeSlot(appointment.appointment_time)}
-                      </p>
-                      <p className="text-xs text-gray-500">Scheduled Time</p>
-                    </div>
+            {waitingAppointments.map(appointment => (
+              <div
+                key={appointment.id}
+                className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:border-blue-200 transition-colors"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h4 className="font-semibold text-gray-900">{appointment.name}</h4>
+                    <p className="text-sm text-gray-600">Case ID: {appointment.case_id}</p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Gender</p>
-                      <p className="font-medium capitalize">{appointment.gender}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Age</p>
-                      <p className="font-medium">{appointment.age} years</p>
-                    </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatTimeSlot(appointment.appointment_time)}
+                    </p>
+                    <p className="text-xs text-gray-500">Scheduled Time</p>
                   </div>
-                  
-                  <Button
-                    onClick={() => handleStatusChange(appointment, 'start')}
-                    isLoading={actionInProgress === appointment.id}
-                    disabled={!!appointments.find(apt => apt.current_appointment?.status === 'in_progress')}
-                    className="w-full"
-                  >
-                    Start Appointment
-                  </Button>
                 </div>
-              ))}
-              
-            {appointments.filter(apt => !apt.current_appointment || apt.current_appointment.status === 'waiting').length === 0 && (
+                
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Gender</p>
+                    <p className="font-medium capitalize">{appointment.gender}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Age</p>
+                    <p className="font-medium">{appointment.age} years</p>
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={() => handleStatusChange(appointment, 'start')}
+                  isLoading={actionInProgress === appointment.id}
+                  disabled={!!currentAppointment}
+                  className="w-full"
+                >
+                  Start Appointment
+                </Button>
+              </div>
+            ))}
+            
+            {waitingAppointments.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
                 <p>No patients waiting</p>
