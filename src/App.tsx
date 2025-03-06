@@ -7,6 +7,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBookings from './pages/admin/components/AdminBookings';
 import AdminTimeSlots from './pages/admin/AdminTimeSlots';
 import AdminUsers from './pages/admin/AdminUsers';
+import ReceptionistPage from './pages/admin/ReceptionistPage';
+import DoctorPage from './pages/admin/DoctorPage';
 import { AdminAuthProvider, useAdminAuth } from './contexts/AdminAuthContext';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -39,6 +41,8 @@ function App() {
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="time-slots" element={<AdminTimeSlots />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="receptionist" element={<ReceptionistPage />} />
+            <Route path="doctor" element={<DoctorPage />} />
           </Route>
         </Routes>
       </AdminAuthProvider>
