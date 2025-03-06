@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, List, Clock, Users, LogOut, UserSquare2, Stethoscope } from 'lucide-react';
+import { Calendar, List, Clock, Users, LogOut } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
 export default function AdminLayout() {
@@ -72,28 +72,6 @@ export default function AdminLayout() {
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Admins
-                </Link>
-                <Link
-                  to="/admin/receptionist"
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    isActive('/admin/receptionist')
-                      ? 'border-blue-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                  }`}
-                >
-                  <UserSquare2 className="h-4 w-4 mr-2" />
-                  Receptionist
-                </Link>
-                <Link
-                  to="/admin/doctor"
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    isActive('/admin/doctor')
-                      ? 'border-blue-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                  }`}
-                >
-                  <Stethoscope className="h-4 w-4 mr-2" />
-                  Doctor
                 </Link>
               </div>
             </div>
