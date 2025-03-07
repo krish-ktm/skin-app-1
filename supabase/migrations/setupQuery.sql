@@ -1,52 +1,3 @@
-/*
-  # Initial Database Schema
-
-  1. Tables
-    - `admin_users`: Store admin user information
-      - `id` (uuid, primary key)
-      - `email` (text, unique)
-      - `name` (text)
-      - `password_hash` (text)
-      - `created_at` (timestamptz)
-      - `last_login` (timestamptz)
-    
-    - `appointments`: Store appointment information
-      - `id` (uuid, primary key)
-      - `case_id` (text, unique)
-      - `name` (text)
-      - `phone` (text)
-      - `appointment_date` (date)
-      - `appointment_time` (time)
-      - `gender` (text)
-      - `age` (integer)
-      - `status` (text)
-      - `user_id` (uuid, references auth.users)
-      - `created_at` (timestamptz)
-    
-    - `time_slot_settings`: Store time slot availability settings
-      - `id` (uuid, primary key)
-      - `date` (date)
-      - `time` (time)
-      - `is_disabled` (boolean)
-      - `created_at` (timestamptz)
-    
-    - `current_appointments`: Track active appointments
-      - `id` (uuid, primary key)
-      - `appointment_id` (uuid, references appointments)
-      - `status` (text)
-      - `started_at` (timestamptz)
-      - `completed_at` (timestamptz)
-
-  2. Indexes
-    - Primary keys on all tables
-    - Indexes for frequently queried columns
-    - Composite indexes for date/time queries
-  
-  3. Security
-    - Row Level Security (RLS) enabled on all tables
-    - Policies for authenticated access
-*/
-
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -106,11 +57,13 @@ CREATE TABLE IF NOT EXISTS current_appointments (
   completed_at timestamptz,
   
   -- Add constraint for status values
-  CONSTRAINT valid_current_status CHECK (status IN ('waiting', 'in_progress', 'completed')),
-  -- Ensure only one appointment can be in progress
-  CONSTRAINT one_appointment_in_progress UNIQUE (status) 
-    WHERE status = 'in_progress'
+  CONSTRAINT valid_current_status CHECK (status IN ('waiting', 'in_progress', 'completed'))
 );
+
+-- Ensure only one appointment can be in progress at a time
+CREATE UNIQUE INDEX one_appointment_in_progress_idx 
+ON current_appointments (appointment_id) 
+WHERE status = 'in_progress';
 
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_appointments_date_time ON appointments(appointment_date, appointment_time);
